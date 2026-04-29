@@ -1,9 +1,9 @@
-AdsVantaAdsVantahttps://t.me/Sa_Tech_bangla/2896<!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>UsefulBot · Smart Assistant TMA</title>
+    <title>✨ GlowKit — Telegram Mini App</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
@@ -11,771 +11,570 @@ AdsVantaAdsVantahttps://t.me/Sa_Tech_bangla/2896<!DOCTYPE html>
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none; /* smoother tap on mobile */
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px 16px 32px;
+            transition: background 0.2s ease, color 0.2s ease;
             min-height: 100vh;
-            transition: background 0.2s ease;
+            overflow-x: hidden;
         }
 
-        .container {
+        /* main container with subtle gradient overlay */
+        .app-container {
             max-width: 500px;
             margin: 0 auto;
+            padding: 20px 18px 32px;
+            position: relative;
+        }
+
+        /* header with user greeting */
+        .header {
             display: flex;
-            flex-direction: column;
-            gap: 24px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--tg-theme-hint-color, rgba(0,0,0,0.1));
         }
-
-        /* header & branding */
-        .brand {
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        .brand h1 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #2b9aff, #8f6eff);
+        .user-greeting {
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--tg-theme-button-color, #2aabee), #6c5ce7);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
             letter-spacing: -0.3px;
         }
-
-        .brand p {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin-top: 6px;
-            color: var(--tg-theme-hint-color, #7e7e7e);
-        }
-
-        .compliance-badge {
-            display: inline-flex;
+        .avatar-badge {
+            background: var(--tg-theme-secondary-bg-color, #efeff4);
+            width: 44px;
+            height: 44px;
+            border-radius: 44px;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
+            justify-content: center;
+            font-size: 24px;
             font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* karma card - main attraction */
+        .karma-card {
+            background: var(--tg-theme-secondary-bg-color, rgba(0,0,0,0.03));
             backdrop-filter: blur(2px);
-            width: fit-content;
-            margin: 0 auto 8px;
-        }
-
-        /* tip card */
-        .tip-card {
-            background: var(--tg-theme-secondary-bg-color, #f8f9fc);
-            border-radius: 28px;
+            border-radius: 36px;
             padding: 28px 20px;
+            margin-bottom: 28px;
             text-align: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            border: 1px solid var(--tg-theme-section-border-color, rgba(0,0,0,0.05));
-            transition: transform 0.15s;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--tg-theme-hint-color, rgba(0,0,0,0.08));
+            transition: transform 0.2s;
         }
-
-        .tip-icon {
-            font-size: 2.2rem;
-            margin-bottom: 12px;
-        }
-
-        .tip-text {
-            font-size: 1.35rem;
-            font-weight: 520;
-            line-height: 1.4;
-            color: var(--tg-theme-text-color, #1a1a1a);
-        }
-
-        .btn {
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 14px 22px;
-            border-radius: 60px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-
-        /* ad container */
-        .ad-container {
-            background: var(--tg-theme-secondary-bg-color, #f2f2f6);
-            border-radius: 26px;
-            border-left: 4px solid #ffb347;
-            overflow: hidden;
-            transition: all 0.25s ease;
-            margin-top: 8px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .ad-card {
-            padding: 16px 18px;
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .ad-emoji {
-            font-size: 2.2rem;
-            background: rgba(0,0,0,0.05);
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 28px;
-        }
-
-        .ad-content {
-            flex: 1;
-        }
-
-        .ad-title {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 4px;
-            color: var(--tg-theme-text-color, #000);
-        }
-
-        .ad-desc {
-            font-size: 0.8rem;
-            opacity: 0.75;
-            color: var(--tg-theme-hint-color, #5e5e5e);
-        }
-
-        .ad-badge {
-            font-size: 0.65rem;
-            background: rgba(255, 180, 71, 0.2);
-            padding: 4px 8px;
-            border-radius: 40px;
-            color: #e68a2e;
-            font-weight: 600;
-        }
-
-        .footer-note {
-            font-size: 0.7rem;
-            text-align: center;
-            color: var(--tg-theme-hint-color, #8e8e93);
-            border-top: 1px solid var(--tg-theme-section-border-color, #e9e9ef);
-            padding-top: 20px;
-            margin-top: 8px;
-        }
-
-        hr {
-            margin: 8px 0;
-            border-color: var(--tg-theme-section-border-color, #e9e9ef);
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="brand">
-        <div class="compliance-badge">
-            <span>✅</span> <span>task → ad impression</span> <span>📢</span>
-        </div>
-        <h1>⚡ UseFusion</h1>
-        <p>real value · no spam · ads only after useful actions</p>
-    </div>
-
-    <!-- dynamic tip output (useful content) -->
-    <div class="tip-card" id="tipCard">
-        <div class="tip-icon">💡</div>
-        <div class="tip-text" id="tipMessage">
-            Tap the button & get a powerful productivity tip
-        </div>
-    </div>
-
-    <!-- main CTA: complete a useful task -->
-    <button class="btn" id="actionButton">
-        ✨ Complete task · Get insight ✨
-    </button>
-
-    <!-- ad container (hidden until user completes first task) -->
-    <div id="adWrapper" class="ad-container hidden">
-        <div class="ad-card" id="adContent">
-            <!-- dynamic ads injected via js -->
-        </div>
-        <div style="padding: 0 16px 12px 16px; font-size: 0.7rem; opacity: 0.6; display: flex; justify-content: space-between;">
-            <span>📢 sponsored message</span>
-            <span>task-completed ad</span>
-        </div>
-    </div>
-
-    <div class="footer-note">
-        🧠 Useful task completed → advertisement displayed 🔁 <br>
-        • No mass mailings • No dummy/proxy bots • Real value for real users
-    </div>
-</div>
-
-<script>
-    // --------------------------------------------------------------
-    // COMPLIANCE: Ad shown ONLY after a "useful task" is performed.
-    // Tasks: generate actionable life/productivity/wellness tips.
-    // Each click on main button = completed useful task -> displays fresh ad.
-    // Follows GramAds rules: "completed task - display advertisement"
-    // No unsolicited ads, no background mailing, no virtual currency clickers.
-    // --------------------------------------------------------------
-
-    (function() {
-        // 1. Initialize Telegram WebApp
-        const webApp = window.Telegram.WebApp;
-        webApp.expand();    // use full available height
-        webApp.ready();     // notify Telegram that mini app is ready
-
-        // Apply Telegram theme colors dynamically to body background already via CSS vars
-        // but ensure main button respects theme if needed (already uses tg vars)
-        
-        // 2. Useful tip dataset (high quality, non-trivial, genuinely helpful content)
-        const USEFUL_TIPS = [
-            { icon: "🧠", text: "Use the 2-minute rule: If a task takes less than 2 minutes, do it immediately. Boosts momentum." },
-            { icon: "⏳", text: "Pomodoro 25/5 method: Intense focus for 25 min, then 5 min break. Repeat → deep work." },
-            { icon: "📝", text: "Write your top 3 priorities every morning. Clarity reduces decision fatigue." },
-            { icon: "🧘", text: "Box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s — reduces stress instantly." },
-            { icon: "🚫", text: "Digital minimalism: turn off non-essential notifications. Reclaim focus." },
-            { icon: "📈", text: "Eat the frog first: tackle the hardest task in the first 90 minutes of your day." },
-            { icon: "🗂️", text: "Weekly review: 15 min every Friday to declutter, plan, and reflect." },
-            { icon: "💪", text: "Implementation intention: 'I will [ACTION] at [TIME] in [LOCATION]' → 3x more follow-through." },
-            { icon: "🌱", text: "The 1% rule: improve one small habit daily; grows exponentially over time." },
-            { icon: "🎯", text: "SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound) increase success rate." }
-        ];
-
-        // 3. Mock Advertisements (impressions, non-intrusive) – each time task is completed, fresh ad appears.
-        // All ads are placeholder examples that respect “ad format” and are shown only after useful interaction.
-        const AD_LIBRARY = [
-            { emoji: "📘", title: "FocusMaster Pro", desc: "Block distractions & flow like never before. Try 7 days free →", badge: "Sponsored" },
-            { emoji: "🎧", title: "Deepwork Sounds", desc: "Lofi & binaural beats for ultimate concentration.", badge: "Ad" },
-            { emoji: "📅", title: "Routinely Planner", desc: "Visual habit tracker + timeboxing. 40% off for first month.", badge: "Promo" },
-            { emoji: "🤖", title: "AI Productivity Coach", desc: "Daily smart suggestions based on your workflow.", badge: "Partner" },
-            { emoji: "💼", title: "TaskWeaver", desc: "Turn chaotic to-do lists into done tasks. Start free.", badge: "Ads by Gram" },
-            { emoji: "⚡", title: "Energize+", desc: "Micro-break exercises & desk stretches — increase focus.", badge: "New" },
-            { emoji: "📊", title: "RescueTime Lite", desc: "See where your time really goes. Privacy-first.", badge: "Recommend" },
-            { emoji: "🌿", title: "Mindful Notion", desc: "Templates for second brain & journaling.", badge: "Featured" }
-        ];
-
-        // DOM elements
-        const tipMessageEl = document.getElementById('tipMessage');
-        const actionBtn = document.getElementById('actionButton');
-        const adWrapper = document.getElementById('adWrapper');
-        const adContentContainer = document.getElementById('adContent');
-
-        // Helper: get random element from array
-        function getRandomItem(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
-        // Helper: update useful tip UI (the core task)
-        function displayRandomTip() {
-            const randomTip = getRandomItem(USEFUL_TIPS);
-            // update tip UI with icon + text
-            tipMessageEl.innerHTML = `${randomTip.icon}  ${randomTip.text}`;
-            // accessibility: announce change (optional)
-            return randomTip;
-        }
-
-        // Render fresh advertisement inside the ad container
-        // This function is called ONLY after a user completes a task.
-        function renderNewAd() {
-            const randomAd = getRandomItem(AD_LIBRARY);
-            // Build structured ad card
-            adContentContainer.innerHTML = `
-                <div class="ad-emoji">${randomAd.emoji}</div>
-                <div class="ad-content">
-                    <div class="ad-title">${randomAd.title}</div>
-                    <div class="ad-desc">${randomAd.desc}</div>
-                </div>
-                <div class="ad-badge">${randomAd.badge}</div>
-            `;
-            // Ensure ad wrapper becomes visible if it was hidden
-            if (adWrapper.classList.contains('hidden')) {
-                adWrapper.classList.remove('hidden');
-            }
-            // Optional: subtle animation / impression log
-            console.log(`[GramAds compliant] Ad impression served after useful task. Ad: ${randomAd.title}`);
-            
-            // (Compliance) The ad is now displayed because user completed a useful task
-            // Also satisfy "ad format - impressions" — no forced mail, only inside webapp interaction.
-        }
-
-        // Flag to track if ad has been shown at least once (just for UX, but rule already enforced)
-        let adEverShown = false;
-
-        // Core function: perform a USEFUL task (generate tip) and then display an ad.
-        function performUsefulTaskAndShowAd() {
-            // 1. Provide useful value to the user (random actionable tip)
-            const currentTip = displayRandomTip();
-            
-            // 2. ✅ After successful task completion -> display advertisement (fresh content)
-            renderNewAd();
-            
-            // 3. Optional: haptic feedback if supported by Telegram (tiny touch)
-            if (webApp && webApp.HapticFeedback) {
-                try {
-                    webApp.HapticFeedback.impactOccurred('light');
-                } catch(e) { /* not critical */ }
-            }
-            
-            // Extra compliance message inside console (developer transparency)
-            console.log(`[UsefulBot] Task completed: "${currentTip.text.substring(0, 50)}..." → Ad displayed. Fully compliant with GramAds policy.`);
-        }
-
-        // Bind click event to main button – each click represents a new completed "useful task"
-        actionBtn.addEventListener('click', () => {
-            performUsefulTaskAndShowAd();
-        });
-
-        // Initial state: NO ad shown until user interacts (click to get first tip)
-        // The ad wrapper stays hidden — because no task completed yet.
-        // This matches "bot should display advertisements only after performing useful tasks"
-        // On very first load, the user sees only the prompt and a button.
-        // Additionally we show a useful placeholder (not an ad)
-        // set default tip as encouraging message (already present in HTML but we can improve)
-        tipMessageEl.innerHTML = `✨ Tap below & receive expert advice ✨`;
-        
-        // make sure ad container is hidden on first load
-        adWrapper.classList.add('hidden');
-        
-        // Ensure that the webapp respects theme changes
-        webApp.onEvent('themeChanged', () => {
-            // re-render if needed — CSS variables handle most of it
-            document.body.style.backgroundColor = 'var(--tg-theme-bg-color, #ffffff)';
-        });
-        
-        // small footer interaction: show that bot is not dummy
-        console.log('[TMA] GramAds-ready: Ads only after actionable tasks, no mass mail, no proxy/clicker mechanics.');
-        
-        // OPTIONAL: If user tries to somehow trigger ad without task - not possible
-        // All ads are gated behind the button click.
-        // Also complies with "Bots - proxies, clickers for obtaining virtual currency in online games, dummy bots are prohibited."
-        // This bot delivers real productivity tips & help — valuable for live audience.
-        
-        // Additional improvement: show initial message to clarify rules just for user transparency
-        // No extra ads are shown before interaction.
-        
-        // According to spec, we also don't send any bulk message via Telegram (web app only)
-        // No mass mailing. No background notifications.
-        
-        // For demonstration, we also prevent any accidental ad double-impression glitch
-        // but every click = new useful tip + new ad (fully within limits, because each ad is tied to a newly completed task)
-        
-        // Edge: ad container content will be replaced every time, perfectly following principle.
-        
-        // Also we ensure that "dummy bots" are not present – we provide fresh, original, helpful tips.
-        // Verify that all tips are non-promotional and genuinely useful.
-        
-        // Additionally, for completeness, send brief expand message.
-        webApp.expand();
-    })();
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>UsefulBot · Smart Assistant TMA</title>
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px 16px 32px;
-            min-height: 100vh;
-            transition: background 0.2s ease;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* header & branding */
-        .brand {
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        .brand h1 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #2b9aff, #8f6eff);
+        .karma-value {
+            font-size: 4.8rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(145deg, #f5b042, #ff6a4b);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            letter-spacing: -0.3px;
-        }
-
-        .brand p {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin-top: 6px;
-            color: var(--tg-theme-hint-color, #7e7e7e);
-        }
-
-        .compliance-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            backdrop-filter: blur(2px);
-            width: fit-content;
-            margin: 0 auto 8px;
-        }
-
-        /* tip card */
-        .tip-card {
-            background: var(--tg-theme-secondary-bg-color, #f8f9fc);
-            border-radius: 28px;
-            padding: 28px 20px;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            border: 1px solid var(--tg-theme-section-border-color, rgba(0,0,0,0.05));
-            transition: transform 0.15s;
-        }
-
-        .tip-icon {
-            font-size: 2.2rem;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.05);
             margin-bottom: 12px;
         }
-
-        .tip-text {
-            font-size: 1.35rem;
-            font-weight: 520;
-            line-height: 1.4;
-            color: var(--tg-theme-text-color, #1a1a1a);
+        .karma-label {
+            font-size: 1rem;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
         }
-
-        .btn {
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 14px 22px;
-            border-radius: 60px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        .action-buttons {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-
-        /* ad container */
-        .ad-container {
-            background: var(--tg-theme-secondary-bg-color, #f2f2f6);
-            border-radius: 26px;
-            border-left: 4px solid #ffb347;
-            overflow: hidden;
-            transition: all 0.25s ease;
-            margin-top: 8px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .ad-card {
-            padding: 16px 18px;
-            display: flex;
-            gap: 14px;
-            align-items: center;
+            gap: 20px;
             flex-wrap: wrap;
         }
-
-        .ad-emoji {
-            font-size: 2.2rem;
-            background: rgba(0,0,0,0.05);
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 28px;
-        }
-
-        .ad-content {
-            flex: 1;
-        }
-
-        .ad-title {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 4px;
-            color: var(--tg-theme-text-color, #000);
-        }
-
-        .ad-desc {
-            font-size: 0.8rem;
-            opacity: 0.75;
-            color: var(--tg-theme-hint-color, #5e5e5e);
-        }
-
-        .ad-badge {
-            font-size: 0.65rem;
-            background: rgba(255, 180, 71, 0.2);
-            padding: 4px 8px;
-            border-radius: 40px;
-            color: #e68a2e;
+        .btn {
+            border: none;
+            background: var(--tg-theme-button-color, #2aabee);
+            color: var(--tg-theme-button-text-color, #ffffff);
             font-weight: 600;
+            font-size: 1.1rem;
+            padding: 12px 28px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-
-        .footer-note {
-            font-size: 0.7rem;
+        .btn:active {
+            transform: scale(0.96);
+            opacity: 0.85;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--tg-theme-button-color, #2aabee);
+            color: var(--tg-theme-button-color, #2aabee);
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 24px 0 28px;
+        }
+        .feature-card {
+            background: var(--tg-theme-secondary-bg-color, rgba(0,0,0,0.02));
+            border-radius: 28px;
+            padding: 16px 10px;
             text-align: center;
-            color: var(--tg-theme-hint-color, #8e8e93);
-            border-top: 1px solid var(--tg-theme-section-border-color, #e9e9ef);
-            padding-top: 20px;
-            margin-top: 8px;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid var(--tg-theme-hint-color, rgba(0,0,0,0.05));
         }
-
-        hr {
-            margin: 8px 0;
-            border-color: var(--tg-theme-section-border-color, #e9e9ef);
+        .feature-card:active {
+            transform: scale(0.97);
+            background: var(--tg-theme-hint-color, rgba(0,0,0,0.05));
+        }
+        .feature-emoji {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+        .feature-title {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .feature-desc {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+        .info-panel {
+            background: var(--tg-theme-secondary-bg-color, #f8f9fc);
+            border-radius: 28px;
+            padding: 16px 18px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(128,128,128,0.15);
+        }
+        .copy-link-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--tg-theme-link-color, #2aabee);
+            padding: 6px 12px;
+            border-radius: 40px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+        /* animation for karma pop */
+        @keyframes bouncePop {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); text-shadow: 0 0 8px gold; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .karma-pop {
+            animation: bouncePop 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        /* main button hint */
+        .tg-main-btn-hint {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            text-align: center;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="brand">
-        <div class="compliance-badge">
-            <span>✅</span> <span>task → ad impression</span> <span>📢</span>
-        </div>
-        <h1>⚡ UseFusion</h1>
-        <p>real value · no spam · ads only after useful actions</p>
+<div class="app-container" id="app">
+    <div class="header">
+        <div class="user-greeting" id="greetingText">✨ Glow User</div>
+        <div class="avatar-badge" id="avatarBadge">😎</div>
     </div>
 
-    <!-- dynamic tip output (useful content) -->
-    <div class="tip-card" id="tipCard">
-        <div class="tip-icon">💡</div>
-        <div class="tip-text" id="tipMessage">
-            Tap the button & get a powerful productivity tip
-        </div>
-    </div>
-
-    <!-- main CTA: complete a useful task -->
-    <button class="btn" id="actionButton">
-        ✨ Complete task · Get insight ✨
-    </button>
-
-    <!-- ad container (hidden until user completes first task) -->
-    <div id="adWrapper" class="ad-container hidden">
-        <div class="ad-card" id="adContent">
-            <!-- dynamic ads injected via js -->
-        </div>
-        <div style="padding: 0 16px 12px 16px; font-size: 0.7rem; opacity: 0.6; display: flex; justify-content: space-between;">
-            <span>📢 sponsored message</span>
-            <span>task-completed ad</span>
+    <!-- Main karma card -->
+    <div class="karma-card">
+        <div class="karma-value" id="karmaValue">0</div>
+        <div class="karma-label">🌟 Your Karma Stars</div>
+        <div class="action-buttons">
+            <button class="btn" id="boostBtn">⚡ Boost +5</button>
+            <button class="btn btn-outline" id="resetBtn">🔄 Reset</button>
         </div>
     </div>
 
-    <div class="footer-note">
-        🧠 Useful task completed → advertisement displayed 🔁 <br>
-        • No mass mailings • No dummy/proxy bots • Real value for real users
+    <!-- Interactive features -->
+    <div class="feature-grid">
+        <div class="feature-card" id="dailyBonus">
+            <div class="feature-emoji">🎁</div>
+            <div class="feature-title">Daily Bonus</div>
+            <div class="feature-desc">Claim +3 karma</div>
+        </div>
+        <div class="feature-card" id="luckyWheelHint">
+            <div class="feature-emoji">🎲</div>
+            <div class="feature-title">Lucky Moment</div>
+            <div class="feature-desc">Random 1–10 karma</div>
+        </div>
+        <div class="feature-card" id="shareCard">
+            <div class="feature-emoji">📤</div>
+            <div class="feature-title">Share Progress</div>
+            <div class="feature-desc">Invite friends</div>
+        </div>
+        <div class="feature-card" id="themeToggleHint">
+            <div class="feature-emoji">🎨</div>
+            <div class="feature-title">Theme Magic</div>
+            <div class="feature-desc">Toggle vibe</div>
+        </div>
     </div>
+
+    <!-- info panel: telegram user data -->
+    <div class="info-panel">
+        <span>🔹 Telegram ID</span>
+        <strong id="tgUserId">—</strong>
+    </div>
+
+    <div class="info-panel">
+        <span>🔗 Share this mini app</span>
+        <button class="copy-link-btn" id="copyLinkBtn">📋 Copy link</button>
+    </div>
+    <div class="tg-main-btn-hint" id="mainBtnHint"></div>
+    <footer>✨ powered by Telegram Mini App | feel the magic</footer>
 </div>
 
 <script>
-    // --------------------------------------------------------------
-    // COMPLIANCE: Ad shown ONLY after a "useful task" is performed.
-    // Tasks: generate actionable life/productivity/wellness tips.
-    // Each click on main button = completed useful task -> displays fresh ad.
-    // Follows GramAds rules: "completed task - display advertisement"
-    // No unsolicited ads, no background mailing, no virtual currency clickers.
-    // --------------------------------------------------------------
-
-    (function() {
-        // 1. Initialize Telegram WebApp
-        const webApp = window.Telegram.WebApp;
-        webApp.expand();    // use full available height
-        webApp.ready();     // notify Telegram that mini app is ready
-
-        // Apply Telegram theme colors dynamically to body background already via CSS vars
-        // but ensure main button respects theme if needed (already uses tg vars)
+    (function(){
+        // Get Telegram WebApp object
+        const tg = window.Telegram.WebApp;
         
-        // 2. Useful tip dataset (high quality, non-trivial, genuinely helpful content)
-        const USEFUL_TIPS = [
-            { icon: "🧠", text: "Use the 2-minute rule: If a task takes less than 2 minutes, do it immediately. Boosts momentum." },
-            { icon: "⏳", text: "Pomodoro 25/5 method: Intense focus for 25 min, then 5 min break. Repeat → deep work." },
-            { icon: "📝", text: "Write your top 3 priorities every morning. Clarity reduces decision fatigue." },
-            { icon: "🧘", text: "Box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s — reduces stress instantly." },
-            { icon: "🚫", text: "Digital minimalism: turn off non-essential notifications. Reclaim focus." },
-            { icon: "📈", text: "Eat the frog first: tackle the hardest task in the first 90 minutes of your day." },
-            { icon: "🗂️", text: "Weekly review: 15 min every Friday to declutter, plan, and reflect." },
-            { icon: "💪", text: "Implementation intention: 'I will [ACTION] at [TIME] in [LOCATION]' → 3x more follow-through." },
-            { icon: "🌱", text: "The 1% rule: improve one small habit daily; grows exponentially over time." },
-            { icon: "🎯", text: "SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound) increase success rate." }
-        ];
-
-        // 3. Mock Advertisements (impressions, non-intrusive) – each time task is completed, fresh ad appears.
-        // All ads are placeholder examples that respect “ad format” and are shown only after useful interaction.
-        const AD_LIBRARY = [
-            { emoji: "📘", title: "FocusMaster Pro", desc: "Block distractions & flow like never before. Try 7 days free →", badge: "Sponsored" },
-            { emoji: "🎧", title: "Deepwork Sounds", desc: "Lofi & binaural beats for ultimate concentration.", badge: "Ad" },
-            { emoji: "📅", title: "Routinely Planner", desc: "Visual habit tracker + timeboxing. 40% off for first month.", badge: "Promo" },
-            { emoji: "🤖", title: "AI Productivity Coach", desc: "Daily smart suggestions based on your workflow.", badge: "Partner" },
-            { emoji: "💼", title: "TaskWeaver", desc: "Turn chaotic to-do lists into done tasks. Start free.", badge: "Ads by Gram" },
-            { emoji: "⚡", title: "Energize+", desc: "Micro-break exercises & desk stretches — increase focus.", badge: "New" },
-            { emoji: "📊", title: "RescueTime Lite", desc: "See where your time really goes. Privacy-first.", badge: "Recommend" },
-            { emoji: "🌿", title: "Mindful Notion", desc: "Templates for second brain & journaling.", badge: "Featured" }
-        ];
-
-        // DOM elements
-        const tipMessageEl = document.getElementById('tipMessage');
-        const actionBtn = document.getElementById('actionButton');
-        const adWrapper = document.getElementById('adWrapper');
-        const adContentContainer = document.getElementById('adContent');
-
-        // Helper: get random element from array
-        function getRandomItem(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
+        // Expand app to full height
+        tg.expand();
+        
+        // ---------- DOM elements ----------
+        const karmaSpan = document.getElementById('karmaValue');
+        const greetingDiv = document.getElementById('greetingText');
+        const avatarBadge = document.getElementById('avatarBadge');
+        const userIdSpan = document.getElementById('tgUserId');
+        const boostBtn = document.getElementById('boostBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const dailyBonusBtn = document.getElementById('dailyBonus');
+        const luckyWheel = document.getElementById('luckyWheelHint');
+        const shareCard = document.getElementById('shareCard');
+        const themeToggle = document.getElementById('themeToggleHint');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const mainHint = document.getElementById('mainBtnHint');
+        
+        // ---------- State & Storage ----------
+        let karma = 0;
+        let lastDailyClaim = null; // store timestamp in ms
+        const STORAGE_KEY = 'glowkit_karma_data';
+        
+        // Helper: persist to localStorage (since mini app can be closed)
+        function persistData() {
+            const data = {
+                karma: karma,
+                lastDailyClaim: lastDailyClaim
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-
-        // Helper: update useful tip UI (the core task)
-        function displayRandomTip() {
-            const randomTip = getRandomItem(USEFUL_TIPS);
-            // update tip UI with icon + text
-            tipMessageEl.innerHTML = `${randomTip.icon}  ${randomTip.text}`;
-            // accessibility: announce change (optional)
-            return randomTip;
+        
+        // load from localStorage
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if(!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if(typeof data.karma === 'number') karma = data.karma;
+                if(data.lastDailyClaim) lastDailyClaim = data.lastDailyClaim;
+                updateKarmaUI();
+            } catch(e) { console.warn(e); }
         }
-
-        // Render fresh advertisement inside the ad container
-        // This function is called ONLY after a user completes a task.
-        function renderNewAd() {
-            const randomAd = getRandomItem(AD_LIBRARY);
-            // Build structured ad card
-            adContentContainer.innerHTML = `
-                <div class="ad-emoji">${randomAd.emoji}</div>
-                <div class="ad-content">
-                    <div class="ad-title">${randomAd.title}</div>
-                    <div class="ad-desc">${randomAd.desc}</div>
-                </div>
-                <div class="ad-badge">${randomAd.badge}</div>
-            `;
-            // Ensure ad wrapper becomes visible if it was hidden
-            if (adWrapper.classList.contains('hidden')) {
-                adWrapper.classList.remove('hidden');
+        
+        // update karma display + small pop effect
+        function updateKarmaUI() {
+            if(karmaSpan) {
+                karmaSpan.innerText = karma;
+                karmaSpan.classList.add('karma-pop');
+                setTimeout(() => karmaSpan.classList.remove('karma-pop'), 300);
             }
-            // Optional: subtle animation / impression log
-            console.log(`[GramAds compliant] Ad impression served after useful task. Ad: ${randomAd.title}`);
-            
-            // (Compliance) The ad is now displayed because user completed a useful task
-            // Also satisfy "ad format - impressions" — no forced mail, only inside webapp interaction.
+            persistData();
+            // update Telegram main button text if needed (optional)
+            // Also control main button visibility: show main button when karma > 50? playful
+            if(karma >= 50) {
+                tg.MainButton.setText("🎉 Legendary! Share it 🎉");
+                tg.MainButton.show();
+                tg.MainButton.onClick(() => {
+                    shareAppLink();
+                    tg.MainButton.hide();
+                });
+                mainHint.innerText = "✨ Main button: share your achievement!";
+            } else {
+                tg.MainButton.hide();
+                mainHint.innerText = "✨ Get 50 karma to unlock magic main button!";
+            }
         }
-
-        // Flag to track if ad has been shown at least once (just for UX, but rule already enforced)
-        let adEverShown = false;
-
-        // Core function: perform a USEFUL task (generate tip) and then display an ad.
-        function performUsefulTaskAndShowAd() {
-            // 1. Provide useful value to the user (random actionable tip)
-            const currentTip = displayRandomTip();
-            
-            // 2. ✅ After successful task completion -> display advertisement (fresh content)
-            renderNewAd();
-            
-            // 3. Optional: haptic feedback if supported by Telegram (tiny touch)
-            if (webApp && webApp.HapticFeedback) {
-                try {
-                    webApp.HapticFeedback.impactOccurred('light');
-                } catch(e) { /* not critical */ }
+        
+        // Haptic feedback helper (light, medium, heavy, success)
+        function haptic(style = 'light') {
+            if(tg.HapticFeedback) {
+                switch(style) {
+                    case 'light': tg.HapticFeedback.impactOccurred('light'); break;
+                    case 'medium': tg.HapticFeedback.impactOccurred('medium'); break;
+                    case 'heavy': tg.HapticFeedback.impactOccurred('heavy'); break;
+                    case 'success': tg.HapticFeedback.notificationOccurred('success'); break;
+                    case 'error': tg.HapticFeedback.notificationOccurred('error'); break;
+                    default: tg.HapticFeedback.impactOccurred('light');
+                }
+            }
+        }
+        
+        // add karma with boundary and haptic success
+        function addKarma(amount, showToast = true) {
+            if(amount > 0) {
+                karma += amount;
+                updateKarmaUI();
+                if(showToast) {
+                    // Telegram show popup / or just haptic + subtle " +X "
+                    tg.showPopup({
+                        title: "✨ Karma +" + amount,
+                        message: `You earned ${amount} karma stars!`,
+                        buttons: [{type: "ok"}]
+                    }, () => {});
+                    haptic('success');
+                } else {
+                    haptic('light');
+                }
+            } else if (amount < 0 && karma + amount >= 0) {
+                karma += amount;
+                updateKarmaUI();
+                haptic('medium');
+            } else if(amount < 0 && karma + amount < 0) {
+                tg.showPopup({
+                    title: "Oops!",
+                    message: "Can't go below zero karma 😇",
+                    buttons: [{type: "ok"}]
+                });
+                haptic('error');
+                return false;
+            }
+            return true;
+        }
+        
+        // reset karma (with confirmation)
+        function resetKarma() {
+            tg.showPopup({
+                title: "Reset Karma?",
+                message: "Are you sure you want to reset your karma to 0?",
+                buttons: [
+                    {id: "cancel", type: "cancel"},
+                    {id: "confirm", type: "default", text: "Reset"}
+                ]
+            }, (btnId) => {
+                if(btnId === "confirm") {
+                    karma = 0;
+                    updateKarmaUI();
+                    tg.showToast({text: "Karma has been reset 🌱", duration: 1500});
+                    haptic('medium');
+                }
+            });
+        }
+        
+        // daily bonus logic
+        function claimDailyBonus() {
+            const now = Date.now();
+            const DAY_MS = 24 * 60 * 60 * 1000;
+            if(lastDailyClaim && (now - lastDailyClaim) < DAY_MS) {
+                const remaining = DAY_MS - (now - lastDailyClaim);
+                const hoursLeft = Math.ceil(remaining / (1000 * 60 * 60));
+                tg.showPopup({
+                    title: "Already claimed 🕒",
+                    message: `Your daily bonus will be available in ~${hoursLeft} hours.`,
+                    buttons: [{type: "ok"}]
+                });
+                haptic('error');
+                return false;
+            }
+            // give +3 karma
+            addKarma(3, true);
+            lastDailyClaim = now;
+            persistData();
+            tg.showToast({text: "🎁 Daily +3 Karma! Come back tomorrow.", duration: 2000});
+            haptic('success');
+            return true;
+        }
+        
+        // lucky moment random between 1 and 10
+        function luckyMoment() {
+            const randomBonus = Math.floor(Math.random() * 10) + 1; // 1-10
+            addKarma(randomBonus, true);
+            tg.showToast({text: `🎲 Lucky! +${randomBonus} karma`, duration: 2000});
+            haptic('light');
+        }
+        
+        // share mini app deep link (copy to clipboard)
+        function shareAppLink() {
+            // Build the mini app direct link: https://t.me/your_bot/your_app
+            // For dynamic: we can generate using initDataUnsafe start_param, but best practice: get bot username from initDataUnsafe? 
+            // Actually we can compose: The app is opened inside a specific bot context. We can retrieve bot_id? Instead we copy current URL.
+            const currentUrl = window.location.href;
+            if(navigator.clipboard) {
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    tg.showPopup({
+                        title: "Link copied!",
+                        message: "Share this link with friends to invite them to this Mini App ✨",
+                        buttons: [{type: "ok"}]
+                    });
+                    haptic('success');
+                }).catch(() => {
+                    tg.showPopup({title: "Error", message: "Could not copy link", buttons: [{type:"ok"}]});
+                });
+            } else {
+                tg.showPopup({title: "Info", message: "Please share the URL manually", buttons:[{type:"ok"}]});
+            }
+        }
+        
+        // Optional: change between light/dark using telegram native theme toggling isn't needed because it's automatic.
+        // However we can implement a "force theme fun" – actually we can set CSS variables based on current scheme and invert? 
+        // but simplest: let the user click Theme Magic which triggers a small highlight effect or toggles extra style.
+        function magicThemeEffect() {
+            // playful: change background gradient overlay temporary
+            const oldBg = document.body.style.backgroundColor;
+            document.body.style.transition = 'background 0.4s';
+            if(tg.colorScheme === 'dark') {
+                document.body.style.backgroundColor = '#1e2a3a';
+                setTimeout(() => document.body.style.backgroundColor = '', 600);
+            } else {
+                document.body.style.backgroundColor = '#fff9ef';
+                setTimeout(() => document.body.style.backgroundColor = '', 600);
+            }
+            tg.showToast({text: "🌈✨ Theme shimmer!", duration: 1000});
+            haptic('light');
+        }
+        
+        // ---------- Setup Telegram WebApp data & user info ----------
+        function initTelegramUser() {
+            const initData = tg.initDataUnsafe;
+            let user = initData?.user;
+            if(user && user.id) {
+                const firstName = user.first_name || 'User';
+                const lastName = user.last_name || '';
+                const fullName = (firstName + ' ' + lastName).trim();
+                greetingDiv.innerHTML = `✨ Hello, ${firstName.split(' ')[0]}!`;
+                if(user.username) greetingDiv.innerHTML += ` @${user.username}`;
+                userIdSpan.innerText = user.id;
+                // avatar based on first letter or custom
+                let avatarLetter = firstName.charAt(0).toUpperCase() || '😊';
+                avatarBadge.innerHTML = avatarLetter;
+                // add special background to avatar
+                avatarBadge.style.background = `linear-gradient(145deg, var(--tg-theme-button-color), #a363d9)`;
+                avatarBadge.style.color = 'white';
+            } else {
+                // fallback for web testing or non-telegram context
+                greetingDiv.innerHTML = `🌟 Guest Explorer`;
+                userIdSpan.innerText = 'web_demo';
+                avatarBadge.innerHTML = '🚀';
+                // but still useful if testing outside telegram: show notification
+                console.log("Running outside Telegram or no user data - demo mode");
+                tg.showPopup({
+                    title: "✨ Welcome Demo",
+                    message: "Using test mode. Your karma will be saved locally.",
+                    buttons: [{type:"ok"}]
+                });
             }
             
-            // Extra compliance message inside console (developer transparency)
-            console.log(`[UsefulBot] Task completed: "${currentTip.text.substring(0, 50)}..." → Ad displayed. Fully compliant with GramAds policy.`);
+            // detect theme and apply extra style
+            if(tg.colorScheme === 'dark') {
+                document.body.style.background = 'var(--tg-theme-bg-color)';
+            }
+            
+            // ready!
+            tg.ready();
         }
-
-        // Bind click event to main button – each click represents a new completed "useful task"
-        actionBtn.addEventListener('click', () => {
-            performUsefulTaskAndShowAd();
+        
+        // attach event listeners with haptics 
+        function bindEvents() {
+            boostBtn.addEventListener('click', () => {
+                addKarma(5, true);
+                haptic('medium');
+            });
+            resetBtn.addEventListener('click', () => {
+                resetKarma();
+            });
+            dailyBonusBtn.addEventListener('click', () => {
+                claimDailyBonus();
+            });
+            luckyWheel.addEventListener('click', () => {
+                luckyMoment();
+            });
+            shareCard.addEventListener('click', () => {
+                shareAppLink();
+            });
+            themeToggle.addEventListener('click', () => {
+                magicThemeEffect();
+            });
+            copyLinkBtn.addEventListener('click', () => {
+                shareAppLink();
+            });
+        }
+        
+        // optional: background color sync with Telegram theme (already using CSS variables)
+        // listen to theme changes
+        function syncTheme() {
+            const root = document.documentElement;
+            const themeParams = tg.themeParams;
+            if(themeParams) {
+                root.style.setProperty('--tg-theme-bg-color', themeParams.bg_color || '#ffffff');
+                root.style.setProperty('--tg-theme-text-color', themeParams.text_color || '#000000');
+                root.style.setProperty('--tg-theme-hint-color', themeParams.hint_color || '#999999');
+                root.style.setProperty('--tg-theme-link-color', themeParams.link_color || '#2aabee');
+                root.style.setProperty('--tg-theme-button-color', themeParams.button_color || '#2aabee');
+                root.style.setProperty('--tg-theme-button-text-color', themeParams.button_text_color || '#ffffff');
+                root.style.setProperty('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color || '#f0f0f0');
+            }
+        }
+        
+        // call initializers
+        syncTheme();
+        loadData();
+        initTelegramUser();
+        bindEvents();
+        updateKarmaUI(); // ensure karma display after load
+        
+        // Notify that mini-app ready and expand again (safe)
+        window.addEventListener('load', () => {
+            tg.expand();
         });
-
-        // Initial state: NO ad shown until user interacts (click to get first tip)
-        // The ad wrapper stays hidden — because no task completed yet.
-        // This matches "bot should display advertisements only after performing useful tasks"
-        // On very first load, the user sees only the prompt and a button.
-        // Additionally we show a useful placeholder (not an ad)
-        // set default tip as encouraging message (already present in HTML but we can improve)
-        tipMessageEl.innerHTML = `✨ Tap below & receive expert advice ✨`;
         
-        // make sure ad container is hidden on first load
-        adWrapper.classList.add('hidden');
-        
-        // Ensure that the webapp respects theme changes
-        webApp.onEvent('themeChanged', () => {
-            // re-render if needed — CSS variables handle most of it
-            document.body.style.backgroundColor = 'var(--tg-theme-bg-color, #ffffff)';
+        // listen to main button close event if needed
+        tg.onEvent('mainButtonClicked', () => {
+            shareAppLink();
         });
         
-        // small footer interaction: show that bot is not dummy
-        console.log('[TMA] GramAds-ready: Ads only after actionable tasks, no mass mail, no proxy/clicker mechanics.');
-        
-        // OPTIONAL: If user tries to somehow trigger ad without task - not possible
-        // All ads are gated behind the button click.
-        // Also complies with "Bots - proxies, clickers for obtaining virtual currency in online games, dummy bots are prohibited."
-        // This bot delivers real productivity tips & help — valuable for live audience.
-        
-        // Additional improvement: show initial message to clarify rules just for user transparency
-        // No extra ads are shown before interaction.
-        
-        // According to spec, we also don't send any bulk message via Telegram (web app only)
-        // No mass mailing. No background notifications.
-        
-        // For demonstration, we also prevent any accidental ad double-impression glitch
-        // but every click = new useful tip + new ad (fully within limits, because each ad is tied to a newly completed task)
-        
-        // Edge: ad container content will be replaced every time, perfectly following principle.
-        
-        // Also we ensure that "dummy bots" are not present – we provide fresh, original, helpful tips.
-        // Verify that all tips are non-promotional and genuinely useful.
-        
-        // Additionally, for completeness, send brief expand message.
-        webApp.expand();
+        // show small track for users: additional flare
+        setTimeout(() => {
+            if(karma === 0) {
+                tg.showPopup({
+                    title: "🌟 Start your journey!",
+                    message: "Click Boost or Daily Bonus to earn Karma stars.",
+                    buttons: [{type:"ok"}]
+                });
+            }
+        }, 500);
     })();
 </script>
 </body>
-</html>
+</html>              
