@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>✨ GlowKit — Telegram Mini App</title>
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
         * {
@@ -252,6 +251,23 @@
             font-weight: 700;
             color: #6a11cb;
         }
+
+        .ad-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--tg-theme-hint-color, #ddd);
+            border-radius: 10px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .ad-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -273,6 +289,9 @@
         <button class="btn btn-ad" id="adRewardBtn">🎥 Watch Ad & Earn +5 Karma</button>
         <button class="btn btn-success" id="claimAdBtn" style="display:none;">✅ Claim Ad Reward (+5 Karma)</button>
         <div class="ad-status" id="adStatus">💰 Watch rewarded ads to boost your karma!</div>
+        <div class="ad-progress-bar" id="adProgressBar" style="display:none;">
+            <div class="ad-progress-fill" id="adProgressFill" style="width:0%;"></div>
+        </div>
     </div>
 
     <!-- Interactive features -->
@@ -337,6 +356,8 @@
         var adRewardBtn = document.getElementById('adRewardBtn');
         var claimAdBtn = document.getElementById('claimAdBtn');
         var adStatus = document.getElementById('adStatus');
+        var adProgressBar = document.getElementById('adProgressBar');
+        var adProgressFill = document.getElementById('adProgressFill');
         
         // ---------- State & Storage ----------
         var karma = 0;
@@ -345,10 +366,6 @@
         var adInProgress = false;
         var adCompleted = false;
         var STORAGE_KEY = 'glowkit_karma_data';
-        
-        // ---------- Ad3s3 Configuration (Your Credentials) ----------
-        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
-        var APP_KEY = '2qvSVEIwKSF5yXRe2vnSOZJzGUO8an';
         
         // Helper: persist to localStorage
         function persistData() {
@@ -542,7 +559,7 @@
             haptic('light');
         }
         
-        // ---------- AD3S3 INTEGRATION (Working Version) ----------
+        // ---------- AD SIMULATION (Since Ad3s3 deep link doesn't work) ----------
         function watchAd() {
             if (!tg) {
                 alert("Telegram WebApp not available. Please open this in Telegram.");
@@ -569,36 +586,41 @@
 
             adInProgress = true;
             adRewardBtn.disabled = true;
-            adStatus.innerHTML = "📺 Opening ad... please wait <span class='ad-timer' id='adTimer'>10</span>";
+            adProgressBar.style.display = 'block';
+            
             haptic('light');
 
-            // Construct the Ad3s3 deep link URL with the actual openId
-            var adUrl = "https://ad3s3.com/offer?blockId=" + BLOCK_ID + "&openId=" + openId + "&type=telegram&appKey=" + APP_KEY;
+            // Show the Ad3s3 URL that would be opened
+            var adUrl = "https://ad3s3.com/offer?blockId=6a3ca3ebcb303f35e850f89b&openId=" + openId + "&type=telegram&appKey=2qvSVEIwKSF5yXRe2vnSOZJzGUO8an";
+            console.log("Ad3s3 URL (would open):", adUrl);
+            console.log("⚠️ Note: ad3s3.com is not reachable - simulating ad view");
             
-            console.log("Opening Ad3s3 URL:", adUrl);
-            console.log("User ID (openId):", openId);
-            
-            // Open the ad link in Telegram's browser
-            tg.openLink(adUrl);
-            
-            // Start countdown timer (simulate ad viewing)
-            var countdown = 10;
-            var timerElement = document.getElementById('adTimer');
+            // Show info popup
+            tg.showPopup({
+                title: "📺 Ad Simulation",
+                message: "Since Ad3s3 is not reachable, we're simulating ad viewing.\n\nAfter 10 seconds, you can claim +5 Karma!",
+                buttons: [{type: "ok"}]
+            });
+
+            // Start progress bar animation
+            var progress = 0;
+            adStatus.innerHTML = "📺 Watching ad... <span class='ad-timer' id='adTimer'>10</span>";
             
             var timerInterval = setInterval(function() {
-                countdown--;
-                if (timerElement) {
-                    timerElement.innerText = countdown;
-                }
-                adStatus.innerHTML = "📺 Watching ad... <span class='ad-timer' id='adTimer'>" + countdown + "</span>";
+                progress += 10;
+                adProgressFill.style.width = progress + '%';
                 
-                if (countdown <= 0) {
+                var secondsLeft = 10 - (progress / 10);
+                adStatus.innerHTML = "📺 Watching ad... <span class='ad-timer' id='adTimer'>" + Math.ceil(secondsLeft) + "</span>";
+                
+                if (progress >= 100) {
                     clearInterval(timerInterval);
                     // Ad viewing completed - show claim button
                     adCompleted = true;
                     adInProgress = false;
                     adRewardBtn.disabled = false;
                     claimAdBtn.style.display = 'block';
+                    adProgressBar.style.display = 'none';
                     adStatus.innerHTML = "✅ <span class='status-success'>Ad completed! Tap 'Claim Ad Reward' to get +5 Karma</span>";
                     haptic('success');
                     
