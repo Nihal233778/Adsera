@@ -377,7 +377,7 @@
         var STORAGE_KEY = 'glowkit_karma_data';
 
         // ---------- Ad3s3 Configuration (Update with your credentials) ----------
-        var APP_ID = '6a3d6f52430u';   // <-- Replace with your full App ID from the dashboard
+        var APP_ID = '6a3d6f1f003774752752430b';   // <-- Replace with your full App ID from the dashboard
         var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
 
         // ---------- SDK Initialisation (runs when DOM is ready) ----------
@@ -386,7 +386,7 @@
                 try {
                     var result = TonAdInit({
                         appId: APP_ID,
-                        debug: true   // Set to false in production
+                        debug: false   // Set to false in production
                     });
                     console.log('✅ TonAdInit successful:', result);
                     sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected (ton-ai-sdk)</span>';
