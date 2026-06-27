@@ -136,6 +136,14 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        .btn-success {
+            background: linear-gradient(135deg, #00b894, #00a36c);
+            color: white;
+            border: none;
+            width: 100%;
+            justify-content: center;
+            margin-top: 8px;
+        }
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -201,6 +209,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .status-success {
+            color: #00b894;
+            font-weight: 600;
+        }
+        .status-error {
+            color: #e17055;
+            font-weight: 600;
+        }
+        .status-warning {
+            color: #fdcb6e;
+            font-weight: 600;
         }
         footer {
             text-align: center;
@@ -224,6 +246,12 @@
             text-align: center;
             opacity: 0.6;
         }
+
+        .ad-timer {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #6a11cb;
+        }
     </style>
 </head>
 <body>
@@ -241,8 +269,9 @@
             <button class="btn" id="boostBtn">⚡ Boost +5</button>
             <button class="btn btn-outline" id="resetBtn">🔄 Reset</button>
         </div>
-        <!-- Ad button -->
+        <!-- Ad buttons -->
         <button class="btn btn-ad" id="adRewardBtn">🎥 Watch Ad & Earn +5 Karma</button>
+        <button class="btn btn-success" id="claimAdBtn" style="display:none;">✅ Claim Ad Reward (+5 Karma)</button>
         <div class="ad-status" id="adStatus">💰 Watch rewarded ads to boost your karma!</div>
     </div>
 
@@ -306,6 +335,7 @@
         var copyLinkBtn = document.getElementById('copyLinkBtn');
         var mainHint = document.getElementById('mainBtnHint');
         var adRewardBtn = document.getElementById('adRewardBtn');
+        var claimAdBtn = document.getElementById('claimAdBtn');
         var adStatus = document.getElementById('adStatus');
         
         // ---------- State & Storage ----------
@@ -313,6 +343,7 @@
         var lastDailyClaim = null;
         var openId = '';
         var adInProgress = false;
+        var adCompleted = false;
         var STORAGE_KEY = 'glowkit_karma_data';
         
         // ---------- Ad3s3 Configuration (Your Credentials) ----------
@@ -532,55 +563,67 @@
                 return;
             }
 
+            // Reset ad completed state
+            adCompleted = false;
+            claimAdBtn.style.display = 'none';
+
             adInProgress = true;
             adRewardBtn.disabled = true;
-            adStatus.innerText = "📺 Opening ad... please wait";
+            adStatus.innerHTML = "📺 Opening ad... please wait <span class='ad-timer' id='adTimer'>10</span>";
             haptic('light');
 
-            // Construct the Ad3s3 deep link URL
-            // Based on Ad3s3 docs: https://ad3s3.com/offer?blockId=BLOCK_ID&openId=USER_ID&type=telegram
-            var adUrl = "https://ad3s3.com/offer?blockId=" + BLOCK_ID + "&openId=" + openId + "&type=telegram";
-            
-            // Also pass the app key for authentication
-            adUrl += "&appKey=" + APP_KEY;
+            // Construct the Ad3s3 deep link URL with the actual openId
+            var adUrl = "https://ad3s3.com/offer?blockId=" + BLOCK_ID + "&openId=" + openId + "&type=telegram&appKey=" + APP_KEY;
             
             console.log("Opening Ad3s3 URL:", adUrl);
+            console.log("User ID (openId):", openId);
             
             // Open the ad link in Telegram's browser
             tg.openLink(adUrl);
             
-            // Since we can't detect when the user returns from the ad,
-            // we show a message and let the user claim the reward manually
-            adStatus.innerText = "✅ Ad opened! After watching, tap 'Claim Reward' below.";
+            // Start countdown timer (simulate ad viewing)
+            var countdown = 10;
+            var timerElement = document.getElementById('adTimer');
             
-            // Show a popup with instructions
-            tg.showPopup({
-                title: "🎥 Ad Started",
-                message: "After watching the ad, come back and tap the 'Claim Ad Reward' button to get your +5 Karma!",
-                buttons: [
-                    {id: "claim", type: "default", text: "Claim Reward"},
-                    {id: "cancel", type: "cancel"}
-                ]
-            }, function(btnId) {
-                if (btnId === "claim") {
-                    // User claims the reward
-                    addKarma(5, true);
-                    adStatus.innerText = "✅ Ad rewarded! +5 Karma earned!";
-                    adInProgress = false;
-                    adRewardBtn.disabled = false;
-                    setTimeout(function() {
-                        adStatus.innerText = "💰 Watch rewarded ads to boost your karma!";
-                    }, 3000);
-                } else {
-                    // User cancelled - keep the button available
-                    adInProgress = false;
-                    adRewardBtn.disabled = false;
-                    adStatus.innerText = "⏸️ Ad claim cancelled. Try again when ready.";
-                    setTimeout(function() {
-                        adStatus.innerText = "💰 Watch rewarded ads to boost your karma!";
-                    }, 2000);
+            var timerInterval = setInterval(function() {
+                countdown--;
+                if (timerElement) {
+                    timerElement.innerText = countdown;
                 }
-            });
+                adStatus.innerHTML = "📺 Watching ad... <span class='ad-timer' id='adTimer'>" + countdown + "</span>";
+                
+                if (countdown <= 0) {
+                    clearInterval(timerInterval);
+                    // Ad viewing completed - show claim button
+                    adCompleted = true;
+                    adInProgress = false;
+                    adRewardBtn.disabled = false;
+                    claimAdBtn.style.display = 'block';
+                    adStatus.innerHTML = "✅ <span class='status-success'>Ad completed! Tap 'Claim Ad Reward' to get +5 Karma</span>";
+                    haptic('success');
+                    
+                    if (tg.showToast) {
+                        tg.showToast({text: "🎉 Ad completed! Claim your reward now!", duration: 2000});
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Claim ad reward
+        function claimAdReward() {
+            if (!adCompleted) {
+                adStatus.innerHTML = "⚠️ <span class='status-warning'>Please watch the ad first!</span>";
+                return;
+            }
+            
+            addKarma(5, true);
+            adCompleted = false;
+            claimAdBtn.style.display = 'none';
+            adStatus.innerHTML = "✅ <span class='status-success'>Ad rewarded! +5 Karma earned!</span>";
+            
+            setTimeout(function() {
+                adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
+            }, 3000);
         }
         
         // ---------- Setup Telegram WebApp user ----------
@@ -588,7 +631,7 @@
             if (!tg) {
                 greetingDiv.innerHTML = "🌟 Please open in Telegram";
                 userIdSpan.innerText = 'not_available';
-                openId = 'demo_user';
+                openId = 'demo_user_' + Date.now();
                 avatarBadge.innerHTML = '⚠️';
                 return;
             }
@@ -605,25 +648,28 @@
                 avatarBadge.innerHTML = avatarLetter;
                 avatarBadge.style.background = "linear-gradient(145deg, var(--tg-theme-button-color), #a363d9)";
                 avatarBadge.style.color = 'white';
-                console.log("✅ Telegram user loaded:", openId);
+                console.log("✅ Telegram user loaded - ID:", openId);
             } else {
                 greetingDiv.innerHTML = "🌟 Guest Explorer";
                 userIdSpan.innerText = 'web_demo';
                 openId = 'demo_user_' + Date.now();
                 avatarBadge.innerHTML = '🚀';
                 console.log("Running outside Telegram or no user data - demo mode");
-                tg.showPopup({
-                    title: "✨ Welcome Demo",
-                    message: "Using test mode. Your karma will be saved locally.",
-                    buttons: [{type:"ok"}]
-                });
+                console.log("Using demo openId:", openId);
+                if (tg) {
+                    tg.showPopup({
+                        title: "✨ Welcome Demo",
+                        message: "Using test mode. Your karma will be saved locally.",
+                        buttons: [{type:"ok"}]
+                    });
+                }
             }
             
-            if(tg.colorScheme === 'dark') {
+            if(tg && tg.colorScheme === 'dark') {
                 document.body.style.background = 'var(--tg-theme-bg-color)';
             }
             
-            tg.ready();
+            if (tg) tg.ready();
         }
         
         // attach event listeners
@@ -639,6 +685,7 @@
             themeToggle.addEventListener('click', magicThemeEffect);
             copyLinkBtn.addEventListener('click', shareAppLink);
             adRewardBtn.addEventListener('click', watchAd);
+            claimAdBtn.addEventListener('click', claimAdReward);
         }
         
         // theme sync
