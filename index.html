@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>✨ GlowKit — Telegram Mini App</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+    <!-- Ad3s3 SDK - Load from their CDN -->
+    <script src="https://ad3s3.com/sdk.js"></script>
     <style>
         * {
             margin: 0;
@@ -223,6 +226,10 @@
             color: #fdcb6e;
             font-weight: 600;
         }
+        .status-info {
+            color: #6a11cb;
+            font-weight: 600;
+        }
         footer {
             text-align: center;
             margin-top: 32px;
@@ -267,6 +274,21 @@
             border-radius: 10px;
             width: 0%;
             transition: width 0.3s ease;
+        }
+
+        .sdk-status {
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .sdk-connected {
+            background: #00b89422;
+            color: #00b894;
+        }
+        .sdk-disconnected {
+            background: #e1705522;
+            color: #e17055;
         }
     </style>
 </head>
@@ -325,6 +347,11 @@
     </div>
 
     <div class="info-panel">
+        <span>📡 Ad3s3 SDK</span>
+        <strong id="sdkStatus">Checking...</strong>
+    </div>
+
+    <div class="info-panel">
         <span>🔗 Share this mini app</span>
         <button class="copy-link-btn" id="copyLinkBtn">📋 Copy link</button>
     </div>
@@ -358,6 +385,7 @@
         var adStatus = document.getElementById('adStatus');
         var adProgressBar = document.getElementById('adProgressBar');
         var adProgressFill = document.getElementById('adProgressFill');
+        var sdkStatusEl = document.getElementById('sdkStatus');
         
         // ---------- State & Storage ----------
         var karma = 0;
@@ -366,6 +394,44 @@
         var adInProgress = false;
         var adCompleted = false;
         var STORAGE_KEY = 'glowkit_karma_data';
+        
+        // ---------- Ad3s3 Configuration (From Your Dashboard) ----------
+        var APP_KEY = '2qvSVEIwKSF5yXRe2vnSOZJzGUO8an';
+        var APP_ID = '6a3d6f...52430u'; // Your actual App ID
+        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
+        
+        // ---------- Check Ad3s3 SDK Status ----------
+        function checkSDKStatus() {
+            if (typeof Ad3s3 !== 'undefined' && Ad3s3.initialize) {
+                sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
+                console.log('✅ Ad3s3 SDK loaded successfully');
+                return true;
+            } else {
+                sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Not Connected</span>';
+                console.warn('⚠️ Ad3s3 SDK not loaded. Using fallback mode.');
+                return false;
+            }
+        }
+        
+        // ---------- Initialize Ad3s3 SDK ----------
+        function initAd3s3() {
+            if (typeof Ad3s3 !== 'undefined' && Ad3s3.initialize) {
+                try {
+                    Ad3s3.initialize({
+                        appId: APP_ID,
+                        appKey: APP_KEY
+                    });
+                    console.log('✅ Ad3s3 initialized successfully');
+                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
+                    return true;
+                } catch(e) {
+                    console.error('❌ Ad3s3 initialization error:', e);
+                    sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Init Error</span>';
+                    return false;
+                }
+            }
+            return false;
+        }
         
         // Helper: persist to localStorage
         function persistData() {
@@ -559,7 +625,7 @@
             haptic('light');
         }
         
-        // ---------- AD SIMULATION (Since Ad3s3 deep link doesn't work) ----------
+        // ---------- AD3S3 REWARDED AD INTEGRATION ----------
         function watchAd() {
             if (!tg) {
                 alert("Telegram WebApp not available. Please open this in Telegram.");
@@ -587,24 +653,71 @@
             adInProgress = true;
             adRewardBtn.disabled = true;
             adProgressBar.style.display = 'block';
+            adProgressFill.style.width = '0%';
             
             haptic('light');
 
-            // Show the Ad3s3 URL that would be opened
-            var adUrl = "https://ad3s3.com/offer?blockId=6a3ca3ebcb303f35e850f89b&openId=" + openId + "&type=telegram&appKey=2qvSVEIwKSF5yXRe2vnSOZJzGUO8an";
-            console.log("Ad3s3 URL (would open):", adUrl);
-            console.log("⚠️ Note: ad3s3.com is not reachable - simulating ad view");
-            
-            // Show info popup
-            tg.showPopup({
-                title: "📺 Ad Simulation",
-                message: "Since Ad3s3 is not reachable, we're simulating ad viewing.\n\nAfter 10 seconds, you can claim +5 Karma!",
-                buttons: [{type: "ok"}]
-            });
-
-            // Start progress bar animation
+            // Try to use Ad3s3 SDK if available
+            if (typeof Ad3s3 !== 'undefined' && Ad3s3.showRewardedAd) {
+                adStatus.innerHTML = "📺 Loading Ad3s3 ad... <span class='status-info'>SDK Connected</span>";
+                
+                try {
+                    Ad3s3.showRewardedAd({
+                        blockId: BLOCK_ID,
+                        openId: openId,
+                        type: 'telegram',
+                        onReward: function() {
+                            // User completed the ad - give reward
+                            addKarma(5, true);
+                            adInProgress = false;
+                            adRewardBtn.disabled = false;
+                            adProgressBar.style.display = 'none';
+                            adStatus.innerHTML = "✅ <span class='status-success'>Ad rewarded! +5 Karma earned!</span>";
+                            haptic('success');
+                            setTimeout(function() {
+                                adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
+                            }, 3000);
+                        },
+                        onError: function(error) {
+                            console.error("Ad3s3 error:", error);
+                            adInProgress = false;
+                            adRewardBtn.disabled = false;
+                            adProgressBar.style.display = 'none';
+                            adStatus.innerHTML = "❌ <span class='status-error'>Ad error. Using fallback...</span>";
+                            // Fallback to simulation
+                            startAdSimulation();
+                        },
+                        onClose: function() {
+                            if (adStatus.innerHTML.includes('rewarded')) {
+                                return;
+                            }
+                            adInProgress = false;
+                            adRewardBtn.disabled = false;
+                            adProgressBar.style.display = 'none';
+                            adStatus.innerHTML = "⏸️ <span class='status-warning'>Ad closed early. Try again.</span>";
+                            setTimeout(function() {
+                                adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
+                            }, 2000);
+                        }
+                    });
+                } catch(e) {
+                    console.error("Ad3s3 exception:", e);
+                    // Fallback to simulation
+                    startAdSimulation();
+                }
+            } else {
+                // SDK not available - use simulation
+                console.warn("Ad3s3 SDK not available - using simulation");
+                startAdSimulation();
+            }
+        }
+        
+        // ---------- Ad Simulation (Fallback) ----------
+        function startAdSimulation() {
             var progress = 0;
             adStatus.innerHTML = "📺 Watching ad... <span class='ad-timer' id='adTimer'>10</span>";
+            adProgressFill.style.width = '0%';
+            adProgressBar.style.display = 'block';
             
             var timerInterval = setInterval(function() {
                 progress += 10;
@@ -615,7 +728,6 @@
                 
                 if (progress >= 100) {
                     clearInterval(timerInterval);
-                    // Ad viewing completed - show claim button
                     adCompleted = true;
                     adInProgress = false;
                     adRewardBtn.disabled = false;
@@ -726,10 +838,17 @@
             }
         }
         
-        // Initialize
+        // ---------- Initialize Everything ----------
         syncTheme();
         loadData();
         initTelegramUser();
+        
+        // Check and initialize Ad3s3
+        var sdkLoaded = checkSDKStatus();
+        if (sdkLoaded) {
+            initAd3s3();
+        }
+        
         bindEvents();
         updateKarmaUI();
         
