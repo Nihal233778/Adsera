@@ -6,10 +6,11 @@
     <title>✨ GlowKit — Telegram Mini App</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- Ad3s3 SDK (ton-ai-sdk) -->
-    <script src="https://ton-ai-sdk.com/sdk.js"></script>
+    <!-- Ad3s3 SDK via CDN (No npm required) -->
+    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js"></script>
+    <!-- Alternative CDN URL if the above doesn't work -->
+    <!-- <script src="https://unpkg.com/ton-ai-sdk@latest/dist/index.js"></script> -->
     <style>
-        /* ====== SAME STYLES AS BEFORE ====== */
         * {
             margin: 0;
             padding: 0;
@@ -342,7 +343,7 @@
         <button class="copy-link-btn" id="copyLinkBtn">📋 Copy link</button>
     </div>
     <div class="tg-main-btn-hint" id="mainBtnHint"></div>
-    <footer>✨ powered by Telegram Mini App | Ad3s3 (ton-ai-sdk)</footer>
+    <footer>✨ powered by Telegram Mini App | Ad3s3 (ton-ai-sdk via CDN)</footer>
 </div>
 
 <script>
@@ -377,19 +378,20 @@
         var STORAGE_KEY = 'glowkit_karma_data';
 
         // ---------- Ad3s3 Configuration (Update with your credentials) ----------
-        var APP_ID = '6a3d6f1f003774752752430b';   // <-- Replace with your full App ID from the dashboard
+        var APP_ID = '6a3d6f52430u';   // <-- Replace with your full App ID
         var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
 
-        // ---------- SDK Initialisation (runs when DOM is ready) ----------
+        // ---------- SDK Initialisation (using CDN-loaded SDK) ----------
         function initTonAdSDK() {
+            // Check if the SDK is available (either global or from CDN)
             if (typeof TonAdInit !== 'undefined') {
                 try {
                     var result = TonAdInit({
                         appId: APP_ID,
-                        debug: false   // Set to false in production
+                        debug: true   // Set to false in production
                     });
                     console.log('✅ TonAdInit successful:', result);
-                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected (ton-ai-sdk)</span>';
+                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected (ton-ai-sdk via CDN)</span>';
                     return true;
                 } catch (e) {
                     console.error('❌ TonAdInit error:', e);
@@ -398,7 +400,7 @@
                 }
             } else {
                 console.warn('⚠️ TonAdInit not available. SDK may not be loaded.');
-                sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Not Loaded</span>';
+                sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Not Loaded (try CDN URL)</span>';
                 return false;
             }
         }
@@ -408,7 +410,7 @@
             return typeof TxnAdPopupShow !== 'undefined';
         }
 
-        // ---------- Other helper functions (karma, haptic, etc.) ----------
+        // ---------- Helper functions ----------
         function persistData() {
             var data = { karma: karma, lastDailyClaim: lastDailyClaim };
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
@@ -519,10 +521,10 @@
                     if (tg) tg.showPopup({ title: "Link copied!", message: "Share with friends ✨", buttons: [{type:"ok"}] });
                     haptic('success');
                 }).catch(function() {
-                    if (tg) tg.showPopup({title: "Error", message: "Could not copy", buttons: [{type:"ok"}]});
+                    if (tg) tg.showPopup({title: "Error", message: "Could not copy", buttons: [{type:"ok"}] });
                 });
             } else {
-                if (tg) tg.showPopup({title: "Info", message: "Please share manually", buttons:[{type:"ok"}]});
+                if (tg) tg.showPopup({title: "Info", message: "Please share manually", buttons:[{type:"ok"}] });
             }
         }
         function magicThemeEffect() {
@@ -538,7 +540,7 @@
             haptic('light');
         }
 
-        // ---------- AD3S3 REWARDED AD (using ton-ai-sdk) ----------
+        // ---------- AD3S3 REWARDED AD ----------
         function watchAd() {
             if (!tg) {
                 alert("Telegram WebApp not available.");
@@ -578,8 +580,6 @@
                         },
                         onAdClick: function(ad) {
                             console.log("👆 Ad clicked:", ad);
-                            // Optionally reward for click (CPC model)
-                            // addKarma(2, true);
                         },
                         onAdError: function(error) {
                             console.error("❌ Ad error:", error);
@@ -706,12 +706,13 @@
         loadData();
         initTelegramUser();
 
-        // Initialise Ad3s3 SDK once DOM is ready
-        var sdkInit = initTonAdSDK();
-        if (!sdkInit) {
-            // If SDK init fails, the fallback simulation will be used
-            sdkStatusEl.innerHTML = '⚠️ <span class="sdk-disconnected">Fallback Mode</span>';
-        }
+        // Try to initialise the SDK after DOM is ready
+        setTimeout(function() {
+            var sdkInit = initTonAdSDK();
+            if (!sdkInit) {
+                sdkStatusEl.innerHTML = '⚠️ <span class="sdk-disconnected">Fallback Mode</span>';
+            }
+        }, 500);
 
         bindEvents();
         updateKarmaUI();
