@@ -6,10 +6,27 @@
     <title>✨ GlowKit — Telegram Mini App</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- Ad3s3 SDK via CDN (No npm required) -->
-    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js"></script>
-    <!-- Alternative CDN URL if the above doesn't work -->
-    <!-- <script src="https://unpkg.com/ton-ai-sdk@latest/dist/index.js"></script> -->
+    <!-- Try multiple CDN sources for Ad3s3 SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js" onerror="loadFallbackSDK()"></script>
+    <script>
+        // Fallback CDN URLs
+        function loadFallbackSDK() {
+            console.log('⚠️ Primary CDN failed, trying fallback...');
+            var script = document.createElement('script');
+            script.src = 'https://unpkg.com/ton-ai-sdk@latest/dist/index.js';
+            script.onerror = function() {
+                console.log('⚠️ Secondary CDN failed, trying third...');
+                var script3 = document.createElement('script');
+                script3.src = 'https://cdnjs.cloudflare.com/ajax/libs/ton-ai-sdk/1.0.0/index.js';
+                script3.onerror = function() {
+                    console.log('❌ All CDN sources failed. Using simulation mode.');
+                    document.dispatchEvent(new Event('sdkFailed'));
+                };
+                document.head.appendChild(script3);
+            };
+            document.head.appendChild(script);
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -278,6 +295,10 @@
             background: #e1705522;
             color: #e17055;
         }
+        .sdk-fallback {
+            background: #fdcb6e22;
+            color: #fdcb6e;
+        }
     </style>
 </head>
 <body>
@@ -343,7 +364,7 @@
         <button class="copy-link-btn" id="copyLinkBtn">📋 Copy link</button>
     </div>
     <div class="tg-main-btn-hint" id="mainBtnHint"></div>
-    <footer>✨ powered by Telegram Mini App | Ad3s3 (ton-ai-sdk via CDN)</footer>
+    <footer>✨ powered by Telegram Mini App | Ad3s3 SDK</footer>
 </div>
 
 <script>
@@ -376,38 +397,46 @@
         var openId = '';
         var adInProgress = false;
         var STORAGE_KEY = 'glowkit_karma_data';
+        var sdkAvailable = false;
 
-        // ---------- Ad3s3 Configuration (Update with your credentials) ----------
+        // ---------- Ad3s3 Configuration ----------
         var APP_ID = '6a3d6f52430u';   // <-- Replace with your full App ID
         var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
 
-        // ---------- SDK Initialisation (using CDN-loaded SDK) ----------
+        // ---------- SDK Initialisation ----------
         function initTonAdSDK() {
-            // Check if the SDK is available (either global or from CDN)
-            if (typeof TonAdInit !== 'undefined') {
+            // Check multiple possible SDK locations
+            var TonAdInitFn = window.TonAdInit || window.tonAdInit || window.TonAd?.init;
+            
+            if (typeof TonAdInitFn !== 'undefined' || typeof window.TonAdInit !== 'undefined') {
                 try {
-                    var result = TonAdInit({
+                    var initFn = window.TonAdInit || TonAdInitFn;
+                    var result = initFn({
                         appId: APP_ID,
-                        debug: true   // Set to false in production
+                        debug: true
                     });
-                    console.log('✅ TonAdInit successful:', result);
-                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected (ton-ai-sdk via CDN)</span>';
+                    console.log('✅ SDK initialised:', result);
+                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
+                    sdkAvailable = true;
                     return true;
                 } catch (e) {
-                    console.error('❌ TonAdInit error:', e);
+                    console.error('❌ SDK init error:', e);
                     sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Init Error</span>';
                     return false;
                 }
             } else {
-                console.warn('⚠️ TonAdInit not available. SDK may not be loaded.');
-                sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Not Loaded (try CDN URL)</span>';
+                console.warn('⚠️ SDK not available.');
+                sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
+                sdkAvailable = false;
                 return false;
             }
         }
 
         // ---------- Check if SDK is ready ----------
         function isSDKReady() {
-            return typeof TxnAdPopupShow !== 'undefined';
+            return typeof window.TxnAdPopupShow !== 'undefined' || 
+                   typeof window.TxnAdPopupShow !== 'undefined' ||
+                   typeof window.tonAd?.showPopup !== 'undefined';
         }
 
         // ---------- Helper functions ----------
@@ -560,10 +589,12 @@
             adStatus.innerHTML = "📺 Loading ad... <span class='status-info'>Please wait</span>";
             haptic('light');
 
-            // Use the official TxnAdPopupShow if available
-            if (typeof TxnAdPopupShow !== 'undefined') {
+            // Try to use the SDK if available
+            var TxnAdPopupShowFn = window.TxnAdPopupShow || window.TxnAdPopupShow || window.tonAd?.showPopup;
+            
+            if (typeof TxnAdPopupShowFn !== 'undefined') {
                 try {
-                    TxnAdPopupShow({
+                    TxnAdPopupShowFn({
                         blockId: BLOCK_ID,
                         countdown: 10,
                         autoClose: true,
@@ -599,15 +630,15 @@
                             }, 2000);
                         }
                     });
+                    return;
                 } catch(e) {
                     console.error("❌ TxnAdPopupShow exception:", e);
-                    startAdSimulation();
                 }
-            } else {
-                // SDK not available – fallback simulation
-                console.warn("TxnAdPopupShow not available – using simulation");
-                startAdSimulation();
             }
+            
+            // If we reach here, SDK not available - use simulation
+            console.warn("SDK not available – using simulation");
+            startAdSimulation();
         }
 
         // ---------- Fallback Simulation ----------
@@ -701,24 +732,41 @@
             }
         }
 
+        // ---------- Listen for SDK load events ----------
+        document.addEventListener('sdkFailed', function() {
+            sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
+        });
+
+        // Also try to detect when SDK loads after page load
+        window.addEventListener('load', function() {
+            // Check if SDK loaded after all scripts
+            setTimeout(function() {
+                if (typeof window.TonAdInit !== 'undefined' || typeof window.TxnAdPopupShow !== 'undefined') {
+                    initTonAdSDK();
+                } else {
+                    // SDK still not available
+                    sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
+                }
+            }, 2000);
+        });
+
         // ---------- Initialise ----------
         syncTheme();
         loadData();
         initTelegramUser();
 
-        // Try to initialise the SDK after DOM is ready
+        // Try to initialise the SDK
         setTimeout(function() {
             var sdkInit = initTonAdSDK();
             if (!sdkInit) {
-                sdkStatusEl.innerHTML = '⚠️ <span class="sdk-disconnected">Fallback Mode</span>';
+                // Will be updated by the fallback detection above
             }
-        }, 500);
+        }, 1000);
 
         bindEvents();
         updateKarmaUI();
 
         if (tg) {
-            window.addEventListener('load', function() { tg.expand(); });
             tg.onEvent('mainButtonClicked', function() { shareAppLink(); });
             setTimeout(function() {
                 if (karma === 0) {
