@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,25 +7,8 @@
     <title>✨ GlowKit — Telegram Mini App</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- TonAd SDK -->
-    <script>
-        // Load TonAd SDK from CDN
-        (function loadTonAdSDK() {
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js';
-            script.onerror = function() {
-                console.log('⚠️ Primary CDN failed, trying fallback...');
-                var fallbackScript = document.createElement('script');
-                fallbackScript.src = 'https://unpkg.com/ton-ai-sdk@latest/dist/index.js';
-                fallbackScript.onerror = function() {
-                    console.log('⚠️ All CDN sources failed. Using simulation mode.');
-                    document.dispatchEvent(new Event('sdkFailed'));
-                };
-                document.head.appendChild(fallbackScript);
-            };
-            document.head.appendChild(script);
-        })();
-    </script>
+    <!-- TonAd SDK - Load from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js"></script>
     <style>
         * {
             margin: 0;
@@ -366,6 +350,25 @@
 </div>
 
 <script>
+    // ============================================================
+    // 1. TONAD SDK INITIALIZATION - CORRECT FORMAT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize TonAd after the DOM is ready
+        // Using YOUR actual app ID
+        const result = TonAdInit({ 
+            appId: '6a3d6f1f003774752752430b',  // Your App ID
+            debug: true  // Set debug=true during testing to receive test ads
+        });
+        console.log('✅ TonAd initialized with result:', result);
+        
+        // Store the result globally for later use
+        window.__tonAdInitResult = result;
+    });
+
+    // ============================================================
+    // 2. MAIN APP LOGIC
+    // ============================================================
     (function(){
         // ---------- DOM elements ----------
         var tg = window.Telegram.WebApp;
@@ -397,46 +400,22 @@
         var STORAGE_KEY = 'glowkit_karma_data';
         var sdkAvailable = false;
 
-        // ---------- Ad3s3 Configuration ----------
+        // ---------- Configuration ----------
         var APP_ID = '6a3d6f1f003774752752430b';   // Your App ID
         var BLOCK_ID = '6a3ca3ebcb303f35e850f89b'; // Your Block ID
-        var APP_KEY = '2qvSVEIwKSF5yXRe2vnSOZJzGUO8an'; // Your App Key
 
-        // ---------- SDK Initialisation ----------
-        function initTonAdSDK() {
-            // Check multiple possible SDK locations
-            var TonAdInitFn = window.TonAdInit || window.tonAdInit || window.TonAd?.init;
-            
-            if (typeof TonAdInitFn !== 'undefined' || typeof window.TonAdInit !== 'undefined') {
-                try {
-                    var initFn = window.TonAdInit || TonAdInitFn;
-                    var result = initFn({
-                        appId: APP_ID,
-                        blockId: BLOCK_ID,
-                        appKey: APP_KEY,
-                        debug: true
-                    });
-                    console.log('✅ TonAd SDK initialised:', result);
-                    sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
-                    sdkAvailable = true;
-                    return true;
-                } catch (e) {
-                    console.error('❌ SDK init error:', e);
-                    sdkStatusEl.innerHTML = '❌ <span class="sdk-disconnected">Init Error</span>';
-                    return false;
-                }
+        // ---------- Check SDK status ----------
+        function checkSDKStatus() {
+            // Check if TonAd is available
+            if (typeof window.TonAd !== 'undefined' || typeof window.TonAdInit !== 'undefined') {
+                sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
+                sdkAvailable = true;
+                return true;
             } else {
-                console.warn('⚠️ SDK not available.');
                 sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
                 sdkAvailable = false;
                 return false;
             }
-        }
-
-        // ---------- Check if SDK is ready ----------
-        function isSDKReady() {
-            return typeof window.TxnAdPopupShow !== 'undefined' || 
-                   typeof window.tonAd?.showPopup !== 'undefined';
         }
 
         // ---------- Helper functions ----------
@@ -569,7 +548,7 @@
             haptic('light');
         }
 
-        // ---------- AD3S3 REWARDED AD ----------
+        // ---------- REWARDED AD FUNCTION ----------
         function watchAd() {
             if (!tg) {
                 alert("Telegram WebApp not available.");
@@ -589,17 +568,11 @@
             adStatus.innerHTML = "📺 Loading ad... <span class='status-info'>Please wait</span>";
             haptic('light');
 
-            // Try to use the SDK if available
-            var TxnAdPopupShowFn = window.TxnAdPopupShow || window.tonAd?.showPopup;
-            
-            if (typeof TxnAdPopupShowFn !== 'undefined') {
+            // Try to use TonAd.showPopup if available
+            if (typeof window.TonAd !== 'undefined' && typeof window.TonAd.showPopup === 'function') {
                 try {
-                    TxnAdPopupShowFn({
+                    window.TonAd.showPopup({
                         blockId: BLOCK_ID,
-                        appId: APP_ID,
-                        appKey: APP_KEY,
-                        countdown: 10,
-                        autoClose: true,
                         onAdComplete: function(ad) {
                             console.log("✅ Ad completed:", ad);
                             addKarma(5, true);
@@ -611,9 +584,6 @@
                                 adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
                             }, 3000);
                         },
-                        onAdClick: function(ad) {
-                            console.log("👆 Ad clicked:", ad);
-                        },
                         onAdError: function(error) {
                             console.error("❌ Ad error:", error);
                             adInProgress = false;
@@ -621,24 +591,24 @@
                             adStatus.innerHTML = "❌ <span class='status-error'>Ad error. Using fallback...</span>";
                             startAdSimulation();
                         },
-                        onAdClose: function(ad) {
-                            console.log("🚪 Ad closed:", ad);
-                            if (adStatus.innerHTML.includes('rewarded')) return;
-                            adInProgress = false;
-                            adRewardBtn.disabled = false;
-                            adStatus.innerHTML = "⏸️ <span class='status-warning'>Ad closed. Try again.</span>";
-                            setTimeout(function() {
-                                adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
-                            }, 2000);
+                        onAdClose: function() {
+                            if (!adStatus.innerHTML.includes('rewarded')) {
+                                adInProgress = false;
+                                adRewardBtn.disabled = false;
+                                adStatus.innerHTML = "⏸️ <span class='status-warning'>Ad closed. Try again.</span>";
+                                setTimeout(function() {
+                                    adStatus.innerHTML = "💰 Watch rewarded ads to boost your karma!";
+                                }, 2000);
+                            }
                         }
                     });
                     return;
                 } catch(e) {
-                    console.error("❌ TxnAdPopupShow exception:", e);
+                    console.error("❌ TonAd.showPopup exception:", e);
                 }
             }
             
-            // If we reach here, SDK not available - use simulation
+            // If SDK not available or error - use simulation
             console.warn("SDK not available – using simulation");
             startAdSimulation();
         }
@@ -734,36 +704,15 @@
             }
         }
 
-        // ---------- Listen for SDK load events ----------
-        document.addEventListener('sdkFailed', function() {
-            sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
-        });
-
-        // Also try to detect when SDK loads after page load
-        window.addEventListener('load', function() {
-            // Check if SDK loaded after all scripts
-            setTimeout(function() {
-                if (typeof window.TonAdInit !== 'undefined' || typeof window.TxnAdPopupShow !== 'undefined') {
-                    initTonAdSDK();
-                } else {
-                    // SDK still not available
-                    sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
-                }
-            }, 2000);
-        });
-
         // ---------- Initialise ----------
         syncTheme();
         loadData();
         initTelegramUser();
 
-        // Try to initialise the SDK
+        // Check SDK status after load
         setTimeout(function() {
-            var sdkInit = initTonAdSDK();
-            if (!sdkInit) {
-                // Will be updated by the fallback detection above
-            }
-        }, 1000);
+            checkSDKStatus();
+        }, 1500);
 
         bindEvents();
         updateKarmaUI();
