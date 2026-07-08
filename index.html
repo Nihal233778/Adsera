@@ -6,26 +6,24 @@
     <title>✨ GlowKit — Telegram Mini App</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- Try multiple CDN sources for Ad3s3 SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js" onerror="loadFallbackSDK()"></script>
+    <!-- TonAd SDK -->
     <script>
-        // Fallback CDN URLs
-        function loadFallbackSDK() {
-            console.log('⚠️ Primary CDN failed, trying fallback...');
+        // Load TonAd SDK from CDN
+        (function loadTonAdSDK() {
             var script = document.createElement('script');
-            script.src = 'https://unpkg.com/ton-ai-sdk@latest/dist/index.js';
+            script.src = 'https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js';
             script.onerror = function() {
-                console.log('⚠️ Secondary CDN failed, trying third...');
-                var script3 = document.createElement('script');
-                script3.src = 'https://cdnjs.cloudflare.com/ajax/libs/ton-ai-sdk/1.0.0/index.js';
-                script3.onerror = function() {
-                    console.log('❌ All CDN sources failed. Using simulation mode.');
+                console.log('⚠️ Primary CDN failed, trying fallback...');
+                var fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://unpkg.com/ton-ai-sdk@latest/dist/index.js';
+                fallbackScript.onerror = function() {
+                    console.log('⚠️ All CDN sources failed. Using simulation mode.');
                     document.dispatchEvent(new Event('sdkFailed'));
                 };
-                document.head.appendChild(script3);
+                document.head.appendChild(fallbackScript);
             };
             document.head.appendChild(script);
-        }
+        })();
     </script>
     <style>
         * {
@@ -355,7 +353,7 @@
     </div>
 
     <div class="info-panel">
-        <span>📡 Ad3s3 SDK</span>
+        <span>📡 TonAd SDK</span>
         <strong id="sdkStatus">Checking...</strong>
     </div>
 
@@ -364,7 +362,7 @@
         <button class="copy-link-btn" id="copyLinkBtn">📋 Copy link</button>
     </div>
     <div class="tg-main-btn-hint" id="mainBtnHint"></div>
-    <footer>✨ powered by Telegram Mini App | Ad3s3 SDK</footer>
+    <footer>✨ powered by Telegram Mini App | TonAd SDK</footer>
 </div>
 
 <script>
@@ -400,8 +398,9 @@
         var sdkAvailable = false;
 
         // ---------- Ad3s3 Configuration ----------
-        var APP_ID = '6a3d6f52430u';   // <-- Replace with your full App ID
-        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
+        var APP_ID = '6a3d6f1f003774752752430b';   // Your App ID
+        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b'; // Your Block ID
+        var APP_KEY = '2qvSVEIwKSF5yXRe2vnSOZJzGUO8an'; // Your App Key
 
         // ---------- SDK Initialisation ----------
         function initTonAdSDK() {
@@ -413,9 +412,11 @@
                     var initFn = window.TonAdInit || TonAdInitFn;
                     var result = initFn({
                         appId: APP_ID,
+                        blockId: BLOCK_ID,
+                        appKey: APP_KEY,
                         debug: true
                     });
-                    console.log('✅ SDK initialised:', result);
+                    console.log('✅ TonAd SDK initialised:', result);
                     sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
                     sdkAvailable = true;
                     return true;
@@ -435,7 +436,6 @@
         // ---------- Check if SDK is ready ----------
         function isSDKReady() {
             return typeof window.TxnAdPopupShow !== 'undefined' || 
-                   typeof window.TxnAdPopupShow !== 'undefined' ||
                    typeof window.tonAd?.showPopup !== 'undefined';
         }
 
@@ -590,12 +590,14 @@
             haptic('light');
 
             // Try to use the SDK if available
-            var TxnAdPopupShowFn = window.TxnAdPopupShow || window.TxnAdPopupShow || window.tonAd?.showPopup;
+            var TxnAdPopupShowFn = window.TxnAdPopupShow || window.tonAd?.showPopup;
             
             if (typeof TxnAdPopupShowFn !== 'undefined') {
                 try {
                     TxnAdPopupShowFn({
                         blockId: BLOCK_ID,
+                        appId: APP_ID,
+                        appKey: APP_KEY,
                         countdown: 10,
                         autoClose: true,
                         onAdComplete: function(ad) {
