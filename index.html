@@ -1,14 +1,66 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>✨ GlowKit — Telegram Mini App</title>
+    
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- TonAd SDK - Load from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js"></script>
+    
+    <!-- TonAd SDK Installation - In HEAD for proper loading -->
+    <script>
+        (function loadTonAdSDK() {
+            // Try primary CDN
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/ton-ai-sdk@latest/dist/index.js';
+            script.onload = function() {
+                console.log('✅ TonAd SDK loaded from primary CDN');
+                if (typeof TonAdInit !== 'undefined') {
+                    try {
+                        const result = TonAdInit({ 
+                            appId: '6a3d6f1f003774752752430b',
+                            debug: true
+                        });
+                        console.log('✅ TonAd initialized:', result);
+                        window.__tonAdInitResult = result;
+                        window.__tonAdReady = true;
+                    } catch(e) {
+                        console.error('❌ TonAd init error:', e);
+                    }
+                }
+            };
+            script.onerror = function() {
+                console.log('⚠️ Primary CDN failed, trying fallback...');
+                var fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://unpkg.com/ton-ai-sdk@latest/dist/index.js';
+                fallbackScript.onload = function() {
+                    console.log('✅ TonAd SDK loaded from fallback CDN');
+                    if (typeof TonAdInit !== 'undefined') {
+                        try {
+                            const result = TonAdInit({ 
+                                appId: '6a3d6f1f003774752752430b',
+                                debug: true
+                            });
+                            console.log('✅ TonAd initialized:', result);
+                            window.__tonAdInitResult = result;
+                            window.__tonAdReady = true;
+                        } catch(e) {
+                            console.error('❌ TonAd init error:', e);
+                        }
+                    }
+                };
+                fallbackScript.onerror = function() {
+                    console.log('⚠️ All CDN sources failed. Using simulation mode.');
+                    window.__tonAdReady = false;
+                    document.dispatchEvent(new Event('sdkFailed'));
+                };
+                document.head.appendChild(fallbackScript);
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -351,23 +403,7 @@
 
 <script>
     // ============================================================
-    // 1. TONAD SDK INITIALIZATION - CORRECT FORMAT
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize TonAd after the DOM is ready
-        // Using YOUR actual app ID
-        const result = TonAdInit({ 
-            appId: '6a3d6f1f003774752752430b',  // Your App ID
-            debug: false // Set debug=true during testing to receive test ads
-        });
-        console.log('✅ TonAd initialized with result:', result);
-        
-        // Store the result globally for later use
-        window.__tonAdInitResult = result;
-    });
-
-    // ============================================================
-    // 2. MAIN APP LOGIC
+    // MAIN APP LOGIC
     // ============================================================
     (function(){
         // ---------- DOM elements ----------
@@ -401,15 +437,19 @@
         var sdkAvailable = false;
 
         // ---------- Configuration ----------
-        var APP_ID = '6a3d6f1f003774752752430b';   // Your App ID
-        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b'; // Your Block ID
+        var APP_ID = '6a3d6f1f003774752752430b';
+        var BLOCK_ID = '6a3ca3ebcb303f35e850f89b';
 
         // ---------- Check SDK status ----------
         function checkSDKStatus() {
-            // Check if TonAd is available
-            if (typeof window.TonAd !== 'undefined' || typeof window.TonAdInit !== 'undefined') {
+            if (window.__tonAdReady === true) {
                 sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
                 sdkAvailable = true;
+                return true;
+            } else if (typeof window.TonAd !== 'undefined' || typeof window.TonAdInit !== 'undefined') {
+                sdkStatusEl.innerHTML = '✅ <span class="sdk-connected">Connected</span>';
+                sdkAvailable = true;
+                window.__tonAdReady = true;
                 return true;
             } else {
                 sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
@@ -569,7 +609,7 @@
             haptic('light');
 
             // Try to use TonAd.showPopup if available
-            if (typeof window.TonAd !== 'undefined' && typeof window.TonAd.showPopup === 'function') {
+            if (window.__tonAdReady && typeof window.TonAd !== 'undefined' && typeof window.TonAd.showPopup === 'function') {
                 try {
                     window.TonAd.showPopup({
                         blockId: BLOCK_ID,
@@ -704,6 +744,12 @@
             }
         }
 
+        // ---------- SDK event listeners ----------
+        document.addEventListener('sdkFailed', function() {
+            sdkStatusEl.innerHTML = '⚠️ <span class="sdk-fallback">Fallback Mode (Simulation)</span>';
+            sdkAvailable = false;
+        });
+
         // ---------- Initialise ----------
         syncTheme();
         loadData();
@@ -712,7 +758,7 @@
         // Check SDK status after load
         setTimeout(function() {
             checkSDKStatus();
-        }, 1500);
+        }, 2000);
 
         bindEvents();
         updateKarmaUI();
