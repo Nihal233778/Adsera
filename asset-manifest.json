@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Adsera/static/css/main.fcac1aaf.css",
+    "main.js": "/Adsera/static/js/main.3606b96a.js",
+    "index.html": "/Adsera/index.html",
+    "main.fcac1aaf.css.map": "/Adsera/static/css/main.fcac1aaf.css.map",
+    "main.3606b96a.js.map": "/Adsera/static/js/main.3606b96a.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fcac1aaf.css",
+    "static/js/main.3606b96a.js"
+  ]
+}
