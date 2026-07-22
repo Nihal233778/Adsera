@@ -18,7 +18,7 @@ function App() {
       // Set debug=true during testing to receive test ads
       const result = TonAdInit({ 
         appId: '6a3d6f1f003774752752430b', // ← REPLACE with your actual App ID
-        debug: true 
+        debug: false 
       });
       
       console.log('📦 TonAdInit Result:', result);
