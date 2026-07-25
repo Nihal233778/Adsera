@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ton-AI TMA</title>
     
-    <!-- ✅ Load SDK from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk/dist/ton-ai-sdk.min.js">
+    <!-- ✅ Try multiple CDN sources -->
+    <script src="https://unpkg.com/ton-ai-sdk/dist/ton-ai-sdk.min.js">
+    </script>
+    <!-- Fallback -->
+    <script>
+        if (typeof TonAdInit === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk@1.0.0/dist/ton-ai-sdk.min.js"><\/script>');
+        }
     </script>
     
     <style>
@@ -82,7 +88,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
-            margin-top: 15px;
+            margin-top: 10px;
         }
         .btn-primary {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -140,6 +146,17 @@
             color: #bbb;
             font-size: 0.7rem;
         }
+        .ad-container {
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            min-height: 50px;
+            display: none;
+        }
+        .ad-container.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -152,6 +169,8 @@
     
     <div class="coins" id="coins">0 <span>🪙</span></div>
     <p style="color:#888;font-size:0.8rem;margin-top:-5px;">Coins</p>
+    
+    <div class="ad-container" id="adContainer"></div>
     
     <button class="btn btn-primary" id="watchBtn" disabled>
         🎬 Watch Ad & Earn
@@ -186,6 +205,7 @@
     let history = [];
     let sdkReady = false;
     let isLoading = false;
+    let initAttempts = 0;
     
     // =============================================================
     // DOM REFS
@@ -196,6 +216,7 @@
     const resetBtn = document.getElementById('resetBtn');
     const msgEl = document.getElementById('msg');
     const historyEl = document.getElementById('history');
+    const adContainer = document.getElementById('adContainer');
     
     // =============================================================
     // UI HELPERS
@@ -249,7 +270,7 @@
     }
     
     // =============================================================
-    // SHOW AD - Using your screenshot's style
+    // SHOW AD - Using Banner
     // =============================================================
     function showAd() {
         if (!sdkReady) {
@@ -262,29 +283,50 @@
         showMsg('📡 Loading ad...', '');
         
         try {
-            if (typeof TonAdBanner === 'undefined') {
-                showMsg('❌ SDK not loaded', 'error');
+            // Try different SDK methods
+            if (typeof TonAdBanner !== 'undefined') {
+                TonAdBanner({
+                    blockId: BLOCK_ID,
+                    onAdClick: function(ad) {
+                        grantReward(ad);
+                        setLoading(false);
+                        adContainer.className = 'ad-container';
+                    },
+                    onAdError: function(err) {
+                        showMsg('❌ Ad error: ' + (err || 'Unknown error'), 'error');
+                        setLoading(false);
+                        adContainer.className = 'ad-container';
+                    },
+                    onAdClose: function() {
+                        setLoading(false);
+                        adContainer.className = 'ad-container';
+                    }
+                });
+            } else if (typeof TonAdPopupShow !== 'undefined') {
+                // Alternative method
+                TonAdPopupShow({
+                    blockId: BLOCK_ID,
+                    onAdClick: function(ad) {
+                        grantReward(ad);
+                        setLoading(false);
+                    },
+                    onAdError: function(err) {
+                        showMsg('❌ Ad error', 'error');
+                        setLoading(false);
+                    },
+                    onAdClose: function() {
+                        setLoading(false);
+                    }
+                });
+            } else {
+                // Fallback: Show a mock ad
+                showMsg('ℹ️ SDK loaded but ad method not found. Check SDK version.', 'error');
                 setLoading(false);
-                return;
             }
-            
-            TonAdBanner({
-                blockId: BLOCK_ID,
-                onAdClick: function(ad) {
-                    grantReward(ad);
-                    setLoading(false);
-                },
-                onAdError: function(err) {
-                    showMsg('❌ Ad error', 'error');
-                    setLoading(false);
-                },
-                onAdClose: function() {
-                    setLoading(false);
-                }
-            });
         } catch (err) {
             showMsg('❌ ' + err.message, 'error');
             setLoading(false);
+            console.error('❌ Ad error:', err);
         }
     }
     
@@ -306,68 +348,65 @@
     }
     
     // =============================================================
-    // ✅ INITIALIZE SDK - EXACTLY AS YOUR SCREENSHOT
+    // ✅ INITIALIZE SDK - Check what's available
     // =============================================================
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize TonAd after the DOM is ready
-        // Set debug=true during testing to receive test ads
-        console.log('🔄 Initializing SDK...');
+    function initSDK() {
+        console.log('🔄 Attempting to initialize SDK... Attempt #' + (initAttempts + 1));
         setStatus('⏳ Loading...', 'loading');
         
-        // Check if SDK is loaded
-        if (typeof TonAdInit === 'undefined') {
-            // SDK not loaded yet, try again
-            setTimeout(initSDK, 500);
-            return;
-        }
+        // Check what's available in the SDK
+        console.log('📦 Available SDK exports:', Object.keys(window).filter(key => key.includes('Ton')));
         
-        initSDK();
-    });
-    
-    function initSDK() {
-        try {
-            const result = TonAdInit({ 
-                appId: APP_ID, 
-                debug: true 
-            });
-            console.log('📦 TonAdInit:', result);
-            
-            if (result && result.success !== false) {
-                sdkReady = true;
-                setStatus('✅ SDK Connected', 'ready');
-                watchBtn.disabled = false;
-                showMsg('✅ SDK ready!', 'success');
-            } else {
-                setStatus('❌ SDK Error', 'error');
-                watchBtn.disabled = true;
-                showMsg('❌ SDK failed', 'error');
+        // Check for different SDK methods
+        if (typeof TonAdInit !== 'undefined') {
+            try {
+                const result = TonAdInit({ 
+                    appId: APP_ID, 
+                    debug: true 
+                });
+                console.log('📦 TonAdInit Result:', result);
+                
+                if (result && result.success !== false) {
+                    sdkReady = true;
+                    setStatus('✅ SDK Connected', 'ready');
+                    watchBtn.disabled = false;
+                    showMsg('✅ SDK ready!', 'success');
+                    
+                    // Check available methods
+                    console.log('✅ TonAdBanner available:', typeof TonAdBanner !== 'undefined');
+                    console.log('✅ TonAdPopupShow available:', typeof TonAdPopupShow !== 'undefined');
+                } else {
+                    handleSDKError('SDK initialization failed');
+                }
+            } catch (err) {
+                handleSDKError(err.message);
             }
-        } catch (err) {
-            setStatus('❌ Error', 'error');
-            watchBtn.disabled = true;
-            showMsg('❌ ' + err.message, 'error');
-            console.error('❌ SDK init error:', err);
+        } else {
+            // SDK not loaded yet, try again
+            if (initAttempts < 15) {
+                initAttempts++;
+                setTimeout(initSDK, 1000);
+            } else {
+                handleSDKError('SDK not loaded after multiple attempts');
+            }
         }
     }
     
-    // Retry if SDK loads late
-    let retries = 0;
-    const retryInterval = setInterval(function() {
-        if (sdkReady) {
-            clearInterval(retryInterval);
-            return;
-        }
-        if (typeof TonAdInit !== 'undefined') {
-            initSDK();
-            clearInterval(retryInterval);
-            return;
-        }
-        retries++;
-        if (retries > 10) {
-            clearInterval(retryInterval);
-            setStatus('⏳ SDK Timeout', 'error');
-        }
-    }, 1000);
+    function handleSDKError(msg) {
+        setStatus('❌ Error', 'error');
+        watchBtn.disabled = true;
+        showMsg('❌ ' + msg, 'error');
+        console.error('❌ SDK error:', msg);
+    }
+    
+    // =============================================================
+    // START APP
+    // =============================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('🚀 App loaded, waiting for SDK...');
+        // Wait a moment for SDK to load
+        setTimeout(initSDK, 300);
+    });
     
     // =============================================================
     // EVENT LISTENERS
@@ -382,7 +421,11 @@
     console.log('📌 App ID:', APP_ID);
     console.log('📌 Block ID:', BLOCK_ID);
     console.log('💡 Use window.__app for debugging');
-    window.__app = { coins, rewards, history, sdkReady, showAd, resetAll };
+    window.__app = { 
+        coins, rewards, history, sdkReady, 
+        showAd, resetAll, initSDK,
+        checkSDK: function() { console.log('SDK Methods:', Object.keys(window).filter(k => k.includes('Ton'))); }
+    };
 </script>
 
 </body>
