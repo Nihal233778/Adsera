@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ton-AI TMA</title>
+    
+    <!-- ✅ Load SDK from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ton-ai-sdk/dist/ton-ai-sdk.min.js">
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .sub {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .coins {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #333;
+            margin: 5px 0;
+        }
+        .coins span {
+            font-size: 1.5rem;
+            color: #888;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 15px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .msg {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .msg.show {
+            display: block;
+        }
+        .msg.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .msg.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .history {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #666;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .history div {
+            padding: 5px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .footer {
+            margin-top: 15px;
+            color: #bbb;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🎯 Ton-AI</h1>
+    <p class="sub">Telegram Mini App</p>
+    
+    <div class="status loading" id="status">⏳ Initializing...</div>
+    
+    <div class="coins" id="coins">0 <span>🪙</span></div>
+    <p style="color:#888;font-size:0.8rem;margin-top:-5px;">Coins</p>
+    
+    <button class="btn btn-primary" id="watchBtn" disabled>
+        🎬 Watch Ad & Earn
+    </button>
+    
+    <button class="btn btn-secondary" id="resetBtn">
+        🔄 Reset
+    </button>
+    
+    <div class="msg" id="msg"></div>
+    
+    <div class="history" id="history">
+        <div style="text-align:center;color:#ccc;">No rewards yet</div>
+    </div>
+    
+    <div class="footer">🔹 Ton-AI SDK</div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    // =============================================================
+    // 🔑 REPLACE WITH YOUR REAL IDs
+    // =============================================================
+    const APP_ID = '6a3d6f1f003774752752430b';      // ← Your App ID
+    const BLOCK_ID = '6a3ca3ebcb303f35e850f89b'; // ← Your Block ID
+    
+    // =============================================================
+    // STATE
+    // =============================================================
+    let coins = 0;
+    let rewards = 0;
+    let history = [];
+    let sdkReady = false;
+    let isLoading = false;
+    
+    // =============================================================
+    // DOM REFS
+    // =============================================================
+    const statusEl = document.getElementById('status');
+    const coinsEl = document.getElementById('coins');
+    const watchBtn = document.getElementById('watchBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const msgEl = document.getElementById('msg');
+    const historyEl = document.getElementById('history');
+    
+    // =============================================================
+    // UI HELPERS
+    // =============================================================
+    function updateUI() {
+        coinsEl.innerHTML = coins + ' <span>🪙</span>';
+        renderHistory();
+    }
+    
+    function showMsg(text, type) {
+        msgEl.textContent = text;
+        msgEl.className = 'msg show ' + type;
+        clearTimeout(msgEl._timeout);
+        msgEl._timeout = setTimeout(() => { msgEl.className = 'msg'; }, 4000);
+    }
+    
+    function setStatus(text, type) {
+        statusEl.textContent = text;
+        statusEl.className = 'status ' + type;
+    }
+    
+    function setLoading(loading) {
+        isLoading = loading;
+        watchBtn.disabled = loading || !sdkReady;
+        watchBtn.textContent = loading ? '⏳ Loading...' : '🎬 Watch Ad & Earn';
+    }
+    
+    function renderHistory() {
+        if (history.length === 0) {
+            historyEl.innerHTML = '<div style="text-align:center;color:#ccc;">No rewards yet</div>';
+            return;
+        }
+        historyEl.innerHTML = history.map(item => 
+            '<div>✅ ' + item.text + ' <span style="float:right;color:#ccc;">' + item.time + '</span></div>'
+        ).join('');
+    }
+    
+    // =============================================================
+    // GRANT REWARD
+    // =============================================================
+    function grantReward(ad) {
+        coins += 10;
+        rewards += 1;
+        history.unshift({
+            text: '+10 coins from ad',
+            time: new Date().toLocaleTimeString()
+        });
+        updateUI();
+        showMsg('🎉 +10 coins earned!', 'success');
+        console.log('✅ Reward granted:', ad);
+    }
+    
+    // =============================================================
+    // SHOW AD - Using your screenshot's style
+    // =============================================================
+    function showAd() {
+        if (!sdkReady) {
+            showMsg('⏳ SDK not ready', 'error');
+            return;
+        }
+        if (isLoading) return;
+        
+        setLoading(true);
+        showMsg('📡 Loading ad...', '');
+        
+        try {
+            if (typeof TonAdBanner === 'undefined') {
+                showMsg('❌ SDK not loaded', 'error');
+                setLoading(false);
+                return;
+            }
+            
+            TonAdBanner({
+                blockId: BLOCK_ID,
+                onAdClick: function(ad) {
+                    grantReward(ad);
+                    setLoading(false);
+                },
+                onAdError: function(err) {
+                    showMsg('❌ Ad error', 'error');
+                    setLoading(false);
+                },
+                onAdClose: function() {
+                    setLoading(false);
+                }
+            });
+        } catch (err) {
+            showMsg('❌ ' + err.message, 'error');
+            setLoading(false);
+        }
+    }
+    
+    // =============================================================
+    // RESET
+    // =============================================================
+    function resetAll() {
+        if (coins === 0 && rewards === 0) {
+            showMsg('Nothing to reset', '');
+            return;
+        }
+        if (confirm('Reset all progress?')) {
+            coins = 0;
+            rewards = 0;
+            history = [];
+            updateUI();
+            showMsg('🔄 Reset complete', '');
+        }
+    }
+    
+    // =============================================================
+    // ✅ INITIALIZE SDK - EXACTLY AS YOUR SCREENSHOT
+    // =============================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize TonAd after the DOM is ready
+        // Set debug=true during testing to receive test ads
+        console.log('🔄 Initializing SDK...');
+        setStatus('⏳ Loading...', 'loading');
+        
+        // Check if SDK is loaded
+        if (typeof TonAdInit === 'undefined') {
+            // SDK not loaded yet, try again
+            setTimeout(initSDK, 500);
+            return;
+        }
+        
+        initSDK();
+    });
+    
+    function initSDK() {
+        try {
+            const result = TonAdInit({ 
+                appId: APP_ID, 
+                debug: true 
+            });
+            console.log('📦 TonAdInit:', result);
+            
+            if (result && result.success !== false) {
+                sdkReady = true;
+                setStatus('✅ SDK Connected', 'ready');
+                watchBtn.disabled = false;
+                showMsg('✅ SDK ready!', 'success');
+            } else {
+                setStatus('❌ SDK Error', 'error');
+                watchBtn.disabled = true;
+                showMsg('❌ SDK failed', 'error');
+            }
+        } catch (err) {
+            setStatus('❌ Error', 'error');
+            watchBtn.disabled = true;
+            showMsg('❌ ' + err.message, 'error');
+            console.error('❌ SDK init error:', err);
+        }
+    }
+    
+    // Retry if SDK loads late
+    let retries = 0;
+    const retryInterval = setInterval(function() {
+        if (sdkReady) {
+            clearInterval(retryInterval);
+            return;
+        }
+        if (typeof TonAdInit !== 'undefined') {
+            initSDK();
+            clearInterval(retryInterval);
+            return;
+        }
+        retries++;
+        if (retries > 10) {
+            clearInterval(retryInterval);
+            setStatus('⏳ SDK Timeout', 'error');
+        }
+    }, 1000);
+    
+    // =============================================================
+    // EVENT LISTENERS
+    // =============================================================
+    watchBtn.addEventListener('click', showAd);
+    resetBtn.addEventListener('click', resetAll);
+    
+    // =============================================================
+    // DEBUG HELP
+    // =============================================================
+    console.log('🚀 Ton-AI TMA App Loaded');
+    console.log('📌 App ID:', APP_ID);
+    console.log('📌 Block ID:', BLOCK_ID);
+    console.log('💡 Use window.__app for debugging');
+    window.__app = { coins, rewards, history, sdkReady, showAd, resetAll };
+</script>
+
+</body>
+</html>
